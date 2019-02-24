@@ -1,0 +1,32 @@
+# this pulls data from S3 and import to neo4j sandbox
+# 1. login to sandbox
+# 2. copy to neo4j and execute line by line
+
+MATCH (n) DETACH DELETE n;
+
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "https://s3.amazonaws.com/rv-harvard-capstone/csv/journal.csv" AS row
+CREATE (:Journal {jid: row.jid, name: row.name});
+
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "https://s3.amazonaws.com/rv-harvard-capstone/csv/article.csv" AS row
+CREATE (:Article {pmid: row.pmid, title: row.title, keywords: row.keywords, pubyear: row.pubyear, jid: row.jid});
+
+CREATE CONSTRAINT ON (a:Journal) ASSERT a.jid IS UNIQUE;
+CREATE CONSTRAINT ON (a:Article) ASSERT a.pmid IS UNIQUE;
+CREATE INDEX ON :Article(title);
+CREATE INDEX ON :Article(pubyear);
+CREATE INDEX ON :Article(keyword);
+CREATE INDEX ON :Journal(name);
+
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "https://s3.amazonaws.com/rv-harvard-capstone/csv/article.csv" AS row
+MATCH (article:Article {pmid: row.pmid})
+MATCH (jour:Journal {jid: row.jid})
+MERGE (article)-[:PUBLISHED_IN]->(jour) 
+
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "https://s3.amazonaws.com/rv-harvard-capstone/csv/relationship_cite.csv" AS row
+MATCH (aa:Article {pmid: row.A})
+MATCH (ab:Article {pmid: row.B})
+MERGE (aa)-[:CITES]->(ab) 
