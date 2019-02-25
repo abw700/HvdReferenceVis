@@ -46,6 +46,16 @@ class Database:
         self.cur.executemany("INSERT INTO citations VALUES (NULL, ?, ?);", to_db)
 
 
+    def get_citation_counts(self):
+        self.cur.execute("SELECT articles.*, COUNT(citations.bpmid) as NumTimesCited from articles LEFT JOIN citations on articles.pmid = citations.bpmid GROUP BY articles.pmid ORDER BY NumTimesCited DESC")
+        rows = self.cur.fetchall()
+        return rows
+
+    def run_sql(self, query):
+        self.cur.execute(query)
+        rows = self.cur.fetchall()
+        return rows
+
 
     def drop_table(self, tableName):
         self.cur.execute("DROP TABLE IF EXISTS " + tableName)
