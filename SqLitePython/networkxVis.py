@@ -25,7 +25,7 @@ def generate_graph(minYear, maxYear):
 
         # Get only the union between the two data sets (articles and citations -- only make nodes out of articles WITH a citation associated)
     dfPapers = pandas.concat([dfCitationDataForPaper.drop_duplicates(subset=[0]), dfCitationDataForPaper.drop_duplicates(subset=[5])])
-    print("The size of the new Citations graph is %d  for years %s - %s" %(len(dfCitationDataForPaper), minYear, maxYear))
+    print("The size of the new Citations graph is %d  for years %s - %s" %(len(dfPapers), minYear, maxYear))
     print("Rendering Graph")
     G = nx.Graph()
     vertices = dfPapers[0]
