@@ -44,6 +44,11 @@ var svg = d3.select("body").append("svg")
           .text(function(d) { return d.title  + '\n'+ d.pubyear + '\n' + d.id; });
         });
 
+    function generateGraph()
+    {
+      alert("hi");
+    }
+
     function ticked() {
       link.attr("x1", function(d) { return d.source.x; })
           .attr("y1", function(d) { return d.source.y; })
