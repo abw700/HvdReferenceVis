@@ -7,7 +7,6 @@
   </head>
   <body>
     <div id="chart"></div>
-    <script type="text/javascript" src="../force/force.js"></script>
 
     <div class = "container">
 
@@ -22,8 +21,11 @@
           <input title="The end pubyear", placeholder="Enter the end pubyear ", type="number", min="1500", max = "3000", name = "years_old_max"> <br>
           <button type="submit"> Refresh Graph </button>
         </form>
+
+        <p>JSON from Server: <input type = "text" id = "results_json" name = "results_json" style='width: 100%;' value='{{results}}'/></p>
     </div>
 
 
+    <script type="text/javascript" src="../force/force.js"></script>
   </body>
 </html>

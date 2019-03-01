@@ -51,15 +51,16 @@ def generate_graph(minYear, maxYear):
     json.dump(jsonData, myfile)
     myfile.close()
     print("dumped file")
+    return jsonData
 
 # Defaults to 1900 - 2020
-generate_graph(1900, 2020)
+
 
 app = Flask(__name__, static_folder="force")
 
 @app.route('/')
 def main_route():
-    print(jsonData)
+    jsonData = generate_graph(1900, 2020)
     return render_template("main.html", results = jsonData)
 
 @app.route('/success', methods=['POST'])
@@ -69,8 +70,10 @@ def success():
         maxYear = request.form["years_old_max"]
         if minYear and maxYear:
             print("The min year is %s and the max year is %s" %(minYear, maxYear))
-            generate_graph(minYear, maxYear)
-        return render_template("/main.html")
+            jsonData = generate_graph(minYear, maxYear)
+            print(jsonData)
+        return render_template("main.html", results = jsonData)
+        # return render_template("main.html", results = jsonData)
 
 
 print('\nGo to http://localhost:8000/force.html to see the example\n')
