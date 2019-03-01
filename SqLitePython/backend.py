@@ -45,6 +45,13 @@ class Database:
             to_db = [(i['A'], i['B']) for i in dr]
         self.cur.executemany("INSERT INTO citations VALUES (NULL, ?, ?);", to_db)
 
+    def query_articles_with_pubyear(self, firstPubYear, lastPubYear):
+        self.conn=sqlite3.connect("pmParkinsons.db")
+        self.cur = self.conn.cursor()
+        self.cur.execute("SELECT citations.apmid as CitingPmid, a1.title as CitingTitle, a1.keywords as CitingKeywords, a1.pubyear as CitingPubyear, a1.jid as CitingJid, a2.pmid as CitedPmid, a2.title as CitedTitle, a2.keywords as CitedKeywords, a2.pubyear as CitedPubyear, a2.jid as CitedJid from citations INNER JOIN articles as a1 on a1.pmid = citations.apmid INNER JOIN articles as a2 on a2.pmid = citations.bpmid WHERE a1.pubyear > ? AND a1.pubyear <= ?", (firstPubYear,lastPubYear))
+        rows = self.cur.fetchall()
+        return rows
+
 
     def get_citation_counts(self):
         self.cur.execute("SELECT articles.*, COUNT(citations.bpmid) as NumTimesCited from articles LEFT JOIN citations on articles.pmid = citations.bpmid GROUP BY articles.pmid ORDER BY NumTimesCited DESC")

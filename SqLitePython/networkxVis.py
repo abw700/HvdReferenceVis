@@ -4,67 +4,78 @@ from networkx import nx
 import matplotlib.pyplot as plt
 from networkx.readwrite import json_graph
 import json
-import flask
+from flask import Flask, redirect, render_template, request
 
 database = Database()
 # Not currently in use... backend.py will import everything for now straight from the CSVs as a bulk import
-dfArticles = pandas.read_csv("article.csv")
+# dfArticles = pandas.read_csv("article.csv")
 dfJournals = pandas.read_csv("journal.csv")
 dfCitations = pandas.read_csv("relationship_cite.csv")
 
 dfCitationCounts = pandas.DataFrame(database.get_citation_counts())
 
 
-dfCitationDataForPaper = pandas.DataFrame(database.run_sql("SELECT citations.apmid as CitingPmid, a1.title as CitingTitle, a1.keywords as CitingKeywords, a1.pubyear as CitingPubyear, a1.jid as CitingJid, a2.pmid as CitedPmid, a2.title as CitedTitle, a2.keywords as CitedKeywords, a2.pubyear as CitedPubyear, a2.jid as CitedJid from citations INNER JOIN articles as a1 on a1.pmid = citations.apmid INNER JOIN articles as a2 on a2.pmid = citations.bpmid"))
+dfCitationDataForPaper = ""
+jsonData = ""
+
+
 #G = nx.convert_matrix.from_pandas_edgelist(dfCitationData, 0, 5)
-G = nx.Graph()
-vertices = dfArticles["pmid"]
-edges = zip(dfCitations["A"], dfCitations["B"])
-G.add_nodes_from(vertices)
-G.add_edges_from(edges)
+def generate_graph(minYear, maxYear):
+    dfCitationDataForPaper = pandas.DataFrame(database.query_articles_with_pubyear(minYear, maxYear))
 
-for n in G:
-    G.node[n]['name'] = n
+        # TODO: Get only the union between the two data sets (articles and citations -- only make nodes out of articles WITH a citation associated)
+    dfPapers = pandas.DataFrame(database.view_all_table("articles"))
+    # dfPapers = dfCitationDataForPaper.drop_duplicates(subset=1)
 
-d = json_graph.node_link_data(G)
-# write this JSON out to a file
-json.dump(d, open('force/force.json', 'w'))
+    print("The size of the new Citations graph is %d  for years %s - %s" %(len(dfCitationDataForPaper), minYear, maxYear))
+    print("Rendering Graph")
+    G = nx.Graph()
+    vertices = dfPapers[0]
 
-app = flask.Flask(__name__, static_folder="force")
+    edges = list(zip(dfCitationDataForPaper[0], dfCitationDataForPaper[5]))
 
-@app.route('/<path:path>')
-def static_proxy(path):
-    return app.send_static_file(path)
+    G.add_nodes_from(vertices)
+    G.add_edges_from(list(edges))
+
+    # Add MetaDAta! TODO: Add citation count and pub date and such
+    index = 0
+    for n in G:
+        if index < len(dfPapers):
+            G.node[n]['pmid'] = n
+            G.node[n]['title'] = dfPapers.iloc[index,1]
+            G.node[n]['pubyear'] = str(dfPapers.iloc[index,3])
+            index = index + 1
+
+
+    jsonData = json_graph.node_link_data(G)
+    # write this JSON out to a file
+    myfile = open('force/force.json', 'w')
+    json.dump(jsonData, myfile)
+    myfile.close()
+    print("dumped file")
+
+# Defaults to 1900 - 2020
+generate_graph(1900, 2020)
+
+app = Flask(__name__, static_folder="force")
+
+@app.route('/')
+def main_route():
+    print(jsonData)
+    return render_template("main.html", results = jsonData)
+
+@app.route('/success', methods=['POST'])
+def success():
+    if request.method == 'POST':
+        minYear = request.form["years_old_min"]
+        maxYear = request.form["years_old_max"]
+        if minYear and maxYear:
+            print("The min year is %s and the max year is %s" %(minYear, maxYear))
+            generate_graph(minYear, maxYear)
+        return render_template("/main.html")
 
 
 print('\nGo to http://localhost:8000/force.html to see the example\n')
-app.run(port=8000)
 
-run()
-
-#nx.draw(G, with_labels=True)
-#plt.show()
-
-#print(dfArticles["pmid"])
-
-
-#print(dfJournals)
-
-#database.drop_table("journals")
-#database.drop_all_tables()
-#print(database.view_all_table("citations"))
-
-
-# Query to get counts
-#SELECT articles.*, COUNT(citations.bpmid) as NumTimesCited
-#from articles
-#LEFT JOIN citations on articles.pmid = citations.bpmid
-#GROUP BY articles.pmid
-
-
-#Query to get all citations WITH data
-#SELECT citations.apmid as CitingPmid, a1.title as CitingTitle, a1.keywords as CitingKeywords, a1.pubyear as CitingPubyear, a1.jid as CitingJid,
-#a2.pmid as CitedPmid, a2.title as CitedTitle, a2.keywords as CitedKeywords, a2.pubyear as CitedPubyear, a2.jid as CitedJid
-#from citations
-#INNER JOIN articles as a1 on a1.pmid = citations.apmid
-#INNER JOIN articles as a2 on a2.pmid = citations.bpmid
+if(__name__ == "__main__"):
+    app.run(debug = True, port = 8000)

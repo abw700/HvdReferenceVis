@@ -1,56 +1,55 @@
-var w = 400,
-    h = 400,
-    fill = d3.scale.category20();
+var width = 960,
+    height = 500
 
-var vis = d3.select("#chart")
-  .append("svg:svg")
-    .attr("width", w)
-    .attr("height", h);
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
 
-d3.json("force.json", function(json) {
-  var force = d3.layout.force()
-      .charge(-120)
-      .linkDistance(30)
-      .nodes(json.nodes)
-      .links(json.links)
-      .size([w, h])
-      .start();
+    var simulation = d3.forceSimulation()
+        .force("charge", d3.forceManyBody().strength(-200))
+        .force("link", d3.forceLink().id(function(d) { return d.pmid; }).distance(40))
+        .force("x", d3.forceX(width / 2))
+        .force("y", d3.forceY(height / 2))
+        .on("tick", ticked);
 
-  var link = vis.selectAll("line.link")
-      .data(json.links)
-    .enter().append("svg:line")
-      .attr("class", "link")
-      .style("stroke-width", function(d) { return Math.sqrt(d.value); })
-      .attr("x1", function(d) { return d.source.x; })
-      .attr("y1", function(d) { return d.source.y; })
-      .attr("x2", function(d) { return d.target.x; })
-      .attr("y2", function(d) { return d.target.y; });
+    var link = svg.selectAll(".link"),
+        node = svg.selectAll(".node");
 
-  var node = vis.selectAll("circle.node")
-      .data(json.nodes)
-    .enter().append("svg:circle")
-      .attr("class", "node")
-      .attr("cx", function(d) { return d.x; })
-      .attr("cy", function(d) { return d.y; })
-      .attr("r", 5)
-      .style("fill", function(d) { return fill(d.group); })
-      .call(force.drag);
+    d3.json("../force/force.json", function(error, graph) {
+      if (error) throw error;
 
-  node.append("svg:title")
-      .text(function(d) { return d.name; });
+      simulation.nodes(graph.nodes);
+      simulation.force("link").links(graph.links);
 
-  vis.style("opacity", 1e-6)
-    .transition()
-      .duration(1000)
-      .style("opacity", 1);
+      link = link
+        .data(graph.links)
+        .enter().append("line")
+          .attr("class", "link");
 
-  force.on("tick", function() {
-    link.attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
+      node = node
+        .data(graph.nodes)
+        .enter().append("circle")
+          .attr("class", "node")
+          .attr("r", 6)
+          .style("fill", function(d) { return d.id; });
 
-    node.attr("cx", function(d) { return d.x; })
-        .attr("cy", function(d) { return d.y; });
-  });
-});
+      var lables = node.append("text")
+        .text(function(d) {
+          return d.id;
+        })
+        .attr('x', 6)
+        .attr('y', 3);
+
+      node.append("title")
+          .text(function(d) { return d.title  + '\n'+ d.pubyear + '\n' + d.id; });
+        });
+
+    function ticked() {
+      link.attr("x1", function(d) { return d.source.x; })
+          .attr("y1", function(d) { return d.source.y; })
+          .attr("x2", function(d) { return d.target.x; })
+          .attr("y2", function(d) { return d.target.y; });
+
+      node.attr("cx", function(d) { return d.x; })
+          .attr("cy", function(d) { return d.y; });
+    }

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Force-Directed Layout</title>
+    <script src="//d3js.org/d3.v4.min.js"></script>
+    <link type="text/css" rel="stylesheet" href="../force/force.css"/>
+  </head>
+  <body>
+    <div id="chart"></div>
+    <script type="text/javascript" src="../force/force.js"></script>
+
+    <div class = "container">
+
+      <h1> Pass Variables to Python </h1>
+      <h3> Pub date within the last years: <h3>
+        <form action="/success" method="post">
+          <input title="The start pubyear", placeholder="Enter the start pubyear ", type="number", min="1500", max = "3000", name = "years_old_min"> <br>
+          <input title="The end pubyear", placeholder="Enter the end pubyear ", type="number", min="1500", max = "3000", name = "years_old_max"> <br>
+          <button type="submit"> Refresh Graph </button>
+        </form>
+    </div>
+
+
+  </body>
+</html>
