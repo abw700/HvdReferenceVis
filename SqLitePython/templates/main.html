@@ -9,16 +9,16 @@
     <div id="chart"></div>
 
     <div class = "container">
+      <h1> References Visualization </h1>
 
-      <form action="/test" method="post">
-        <input type="submit" text= "Test Refresh Graph" onclick="generateGraph()" />
-      </form>
+      <div class = "graph" id = "graph">
+        <!-- GRAPH will go here  -->
+      </div>
 
-      <h1> Pass Variables to Python </h1>
       <h3> Pub date within the last years: <h3>
         <form action="/success" method="post">
-          <input title="The start pubyear", placeholder="Enter the start pubyear ", type="number", min="1500", max = "3000", name = "years_old_min"> <br>
-          <input title="The end pubyear", placeholder="Enter the end pubyear ", type="number", min="1500", max = "3000", name = "years_old_max"> <br>
+          <input title="The start pubyear", placeholder="Min pubyear", type="number", min="1800", max = "3000", name = "years_old_min"> <br>
+          <input title="The end pubyear", placeholder="Max pubyear", type="number", min="1800", max = "3000", name = "years_old_max"> <br>
           <button type="submit"> Refresh Graph </button>
         </form>
 

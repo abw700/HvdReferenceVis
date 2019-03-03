@@ -44,13 +44,11 @@ def generate_graph(minYear, maxYear):
             G.node[n]['pubyear'] = str(dfPapers.iloc[index,3])
             index = index + 1
 
-
+    # Get JSON in text format to pass via results to HTML side...
     jsonData = json_graph.node_link_data(G)
-    # write this JSON out to a file
-    myfile = open('force/force.json', 'w')
-    json.dump(jsonData, myfile)
-    myfile.close()
-    print("dumped file")
+    jsonData = json.dumps(jsonData)
+
+    print("Received JSON -- Sending along to HTML under RESULTS param")
     return jsonData
 
 # Defaults to 1900 - 2020
@@ -71,7 +69,7 @@ def success():
         if minYear and maxYear:
             print("The min year is %s and the max year is %s" %(minYear, maxYear))
             jsonData = generate_graph(minYear, maxYear)
-            print(jsonData)
+            # print(jsonData)
         return render_template("main.html", results = jsonData)
         # return render_template("main.html", results = jsonData)
 

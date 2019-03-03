@@ -1,11 +1,15 @@
 var width = 960,
     height = 500
 
-var svg = d3.select("body").append("svg")
+var svg = d3.select(".graph").append("svg")
     .attr("width", width)
     .attr("height", height);
 
+    // Get the JSON data from the input field and parse it.
     var jsonData = document.getElementById('results_json').value;
+
+    graph = JSON.parse(jsonData);
+
     var simulation = d3.forceSimulation()
         .force("charge", d3.forceManyBody().strength(-200))
         .force("link", d3.forceLink().id(function(d) { return d.pmid; }).distance(40))
@@ -16,10 +20,10 @@ var svg = d3.select("body").append("svg")
     var link = svg.selectAll(".link"),
         node = svg.selectAll(".node");
 
-
-
-    d3.json("../force/force.json", function(error, graph) {
-      if (error) throw error;
+    // console.log (jsonData);
+    // d3.json(jsonData, function(error, graph) {
+    // d3.json("../force/force.json", function(error, graph) {
+      // if (error) throw error;
 
       simulation.nodes(graph.nodes);
       simulation.force("link").links(graph.links);
@@ -45,7 +49,7 @@ var svg = d3.select("body").append("svg")
 
       node.append("title")
           .text(function(d) { return d.title  + '\n'+ d.pubyear + '\n' + d.id; });
-        });
+
 
     function ticked() {
       link.attr("x1", function(d) { return d.source.x; })
