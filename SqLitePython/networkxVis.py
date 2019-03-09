@@ -58,7 +58,7 @@ app = Flask(__name__, static_folder="force")
 
 @app.route('/')
 def main_route():
-    jsonData = generate_graph(1900, 2020)
+    jsonData = generate_graph(1000, 2020)
     return render_template("main.html", results = jsonData)
 
 @app.route('/success', methods=['POST'])
@@ -72,6 +72,17 @@ def success():
             # print(jsonData)
         return render_template("main.html", results = jsonData)
         # return render_template("main.html", results = jsonData)
+
+# GET route for citations by pmid
+@app.route('/getIncomingCitations', methods=['GET'])
+def getIncomingCitations():
+    pmid = request.args.get('pmid', 0, type=int)
+    dfPapersThatCite = pandas.DataFrame(database.query_articles_that_cite_pmid(pmid))
+    numberOfPapersThatCited = int(dfPapersThatCite.size)
+    print("Selected node pmid is %s, running incomingCitations query" %(pmid))
+
+    return json.dumps({'status':'OK','numberCiting': numberOfPapersThatCited, 'citingPmids':dfPapersThatCite.to_json(orient = "index")});
+
 
 
 print('\nGo to http://localhost:8000/force.html to see the example\n')
