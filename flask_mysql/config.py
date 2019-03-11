@@ -21,6 +21,13 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_ECHO = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+# Staging environment config
+class StagingConfig(Config):
+    '''stage config'''
+    DEBUG = True
+    SQLALCHEMY_ECHO = True
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
 # Test environment config
 class TestConfig(Config):
     '''test config'''
@@ -35,6 +42,7 @@ class ProductionConfig(Config):
 app_config = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,
-    'test': TestConfig
+    'test': TestConfig,
+    'stage': StagingConfig
 }
 
