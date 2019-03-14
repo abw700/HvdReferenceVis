@@ -42,28 +42,16 @@ df_ref.columns = ['apmid', 'bpmid']
 df_ref = df_ref.drop_duplicates()
 
 # database info
-db_config = {
-    'endpoints': 'rv-harvard-capstone-db.c5usqplnbvhe.us-east-1.rds.amazonaws.com',
-    'dbname': 'rvcapsrv1',
-    'username': 'rvcap',
-    'password': 'rWJ5is53',
-    'pool_recycle': 3600
-}
-SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://{}:{}@{}/{}?charset=utf8mb4'.format(db_config['username'], db_config['password'], db_config['endpoints'], db_config['dbname'])
-
 # connect and create tables if not exist
-conn = sqlalchemy.create_engine(SQLALCHEMY_DATABASE_URI, pool_recycle=db_config['pool_recycle'])
+conn = sqlalchemy.create_engine('sqlite:///rvcapsrv1.db')
 
 # create tables
 conn.execute("DROP TABLE IF EXISTS journal")
 conn.execute("DROP TABLE IF EXISTS article")
 conn.execute("DROP TABLE IF EXISTS citation")
-conn.execute("CREATE TABLE IF NOT EXISTS journal (id INTEGER PRIMARY KEY UNIQUE AUTO_INCREMENT, name text)")
+conn.execute("CREATE TABLE IF NOT EXISTS journal (id INTEGER PRIMARY KEY UNIQUE, name text)")
 conn.execute("CREATE TABLE IF NOT EXISTS article (id INTEGER PRIMARY KEY UNIQUE, title text, abstract text, pubyear integer, jid integer)")
-conn.execute("CREATE TABLE IF NOT EXISTS citation (id INTEGER PRIMARY KEY UNIQUE AUTO_INCREMENT, apmid integer, bpmid integer)")
-result = conn.execute("SHOW TABLES")
-print('List if tables in db...')
-print(result.fetchall())
+conn.execute("CREATE TABLE IF NOT EXISTS citation (id INTEGER PRIMARY KEY UNIQUE, apmid integer, bpmid integer)")
 
 # check if journal already in db if it is, don't add
 df_journal_exists = pd.read_sql('journal', con=conn)
@@ -72,7 +60,7 @@ df_journal = df_journal[df_journal['id'].isna()][['name']]
 
 # write journals to sql
 df_journal.to_sql('journal', con=conn, index=False, if_exists='append')
-print('Wrote {:} new journals to MySQL DB'.format(df_journal.shape[0]))
+print('Wrote {:} new journals to SQLite DB'.format(df_journal.shape[0]))
 
 # get list of jid and put into article
 df_journal_exists = pd.read_sql('journal', con=conn)
@@ -89,9 +77,9 @@ df_article = df_article[~df_article['id'].isin(article_exists)]
 
 # write articles to sql
 df_article.to_sql('article', con=conn, index=False, if_exists='append')
-print('Wrote {:} new articles to MySQL DB'.format(df_article.shape[0]))
+print('Wrote {:} new articles to SQLite DB'.format(df_article.shape[0]))
 
 # write references to sql
 df_ref.to_sql('citation', con=conn, index=False, if_exists='append')
-print('Wrote {:} new citations to MySQL DB'.format(df_ref.shape[0]))
+print('Wrote {:} new citations to SQLite DB'.format(df_ref.shape[0]))
 

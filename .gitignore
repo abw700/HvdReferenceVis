@@ -108,6 +108,7 @@ data/
 targz/
 download/
 oa_file_list.txt 
+*.db
 
 # IDE
 .vscode/
