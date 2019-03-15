@@ -70,8 +70,8 @@ df_article.columns = ['id', 'title', 'abstract', 'pubyear', 'jid']
 
 # check if article already in db if it is, don't add
 df_article['id'] = df_article['id'].astype(int)
-df_article['title'] = df_article['title'].str.encode('utf-8')
-df_article['abstract'] = df_article['abstract'].str.encode('utf-8')
+df_article['title'] = df_article['title']
+df_article['abstract'] = df_article['abstract']
 article_exists = pd.read_sql('''SELECT id FROM article''', con=conn)['id'].tolist()
 df_article = df_article[~df_article['id'].isin(article_exists)]
 
