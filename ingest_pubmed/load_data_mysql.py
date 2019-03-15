@@ -95,3 +95,6 @@ print('Wrote {:} new articles to MySQL DB'.format(df_article.shape[0]))
 df_ref.to_sql('citation', con=conn, index=False, if_exists='append')
 print('Wrote {:} new citations to MySQL DB'.format(df_ref.shape[0]))
 
+# table for storing citation count
+conn.execute("CREATE TABLE IF NOT EXISTS citecnt (id INTEGER PRIMARY KEY UNIQUE, citations INTEGER)")
+conn.execute("INSERT INTO citecnt SELECT bpmid AS id, COUNT(1) AS citations FROM citation GROUP BY bpmid")
