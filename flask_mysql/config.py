@@ -1,4 +1,7 @@
-## Setup configuration for app and db
+import os
+
+# base directory
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 # Config for all environments
@@ -20,23 +23,27 @@ class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_ECHO = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'rvcapsrv1.db')
+
 
 # Staging environment config
 class StagingConfig(Config):
     '''stage config'''
     DEBUG = True
-    SQLALCHEMY_ECHO = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
 
 # Test environment config
 class TestConfig(Config):
     '''test config'''
     DEBUG = False
 
+
 # Prod environment config
 class ProductionConfig(Config):
     '''prod config'''
     DEBUG = False
+
 
 # Select app config
 app_config = {
