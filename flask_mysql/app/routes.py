@@ -9,6 +9,19 @@ def index():
     '''Index'''
     return 'Reference visualization rocks!!!'
 
+# article list for all articles
+@app.route('/article', methods=['GET'])
+def get_article_all():
+    '''GET all articles'''
+    article_limit = 100
+    #TODO: Add in article_limit json param?
+    articles = models.Article().get_all(article_limit)
+    if not articles:
+        abort(404)
+    articles = [obj.to_dict() for obj in articles]
+    return jsonify(article=articles), 200
+
+
 # article by id
 @app.route('/article/<int:article_id>', methods=['GET'])
 def get_article_by_id(article_id):
