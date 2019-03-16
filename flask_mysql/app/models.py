@@ -20,6 +20,10 @@ class Article(db.Model):
     def get(self, id):
         return self.query.filter_by(id=id).limit(1).all()
 
+    # get all articles (limited to 100 at this point, but you can pass in whatever)
+    def get_all(self, limit = 100):
+        return self.query.limit(limit).all()
+
 
 class Journal(db.Model):
     '''Journal object'''
