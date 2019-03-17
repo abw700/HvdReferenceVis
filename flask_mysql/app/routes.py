@@ -10,11 +10,18 @@ def index():
     return 'Reference visualization rocks!!!'
 
 # article list for all articles
-@app.route('/article', methods=['GET'])
+@app.route('/article', methods=['POST'])
 def get_article_all():
     '''GET all articles'''
+
+    # limit number of articles
     article_limit = 100
-    #TODO: Add in article_limit json param?
+    if not request.data or not request.json or 'article_limit' not in request.json:
+        article_limit = 100
+    else:
+        article_limit = request.json['article_limit']
+
+    # get
     articles = models.Article().get_all(article_limit)
     if not articles:
         abort(404)
@@ -41,8 +48,8 @@ def get_article_id_in_period():
 
     if not request.json:
         abort(400)
-    min_year = request.json['min_year'] if 'min_year' else 0
-    max_year = request.json['max_year'] if 'max_year' else 9999
+    min_year = request.json['min_year'] if 'min_year' in request.json else 0
+    max_year = request.json['max_year'] if 'max_year' in request.json else 9999
     print(min_year)
 
     # check if min < max
@@ -63,8 +70,8 @@ def get_article_id_by_citationcount():
 
     if not request.json:
         abort(400)
-    min_cite = request.json['min_cite'] if 'min_cite' else 0
-    max_cite = request.json['max_cite'] if 'max_cite' else 999999
+    min_cite = request.json['min_cite'] if 'min_cite' in request.json else 0
+    max_cite = request.json['max_cite'] if 'max_cite' in request.json else 999999
 
     # check if min < max
     if min_cite > max_cite:
@@ -126,11 +133,11 @@ def get_graph_in_period():
 
     if not request.json:
         abort(400)
-    min_year = request.json['min_year'] if 'min_year' else 0
-    max_year = request.json['max_year'] if 'max_year' else 9999
-    min_cite = request.json['min_cite'] if 'min_cite' else 0
-    max_cite = request.json['max_cite'] if 'max_cite' else 999999
-    rank_var = request.json['rank'] if 'rank' else 'none'
+    min_year = request.json['min_year'] if 'min_year' in request.json else 0
+    max_year = request.json['max_year'] if 'max_year' in request.json else 9999
+    min_cite = request.json['min_cite'] if 'min_cite' in request.json else 0
+    max_cite = request.json['max_cite'] if 'max_cite' in request.json else 999999
+    rank_var = request.json['rank'] if 'rank' in request.json else 'none'
 
     # check if min < max
     if min_year > max_year or min_cite > max_cite:
@@ -138,6 +145,31 @@ def get_graph_in_period():
 
     # get
     gr, n = graph.generate_graph(min_year, max_year, min_cite, max_cite, rank_var)
+    # gr = gr.to_dict(orient='records')
+    if not gr:
+        abort(404)
+    return jsonify(count=n, graph=gr), 200
+
+# graph title SEARCH
+@app.route('/graph/title', methods=['POST'])
+def get_graph_in_period_with_title():
+    '''GET graph within the year timeframe, with provided title (SEARCH)'''
+
+    if not request.json:
+        abort(400)
+    title = request.json['title'] if 'title' in request.json else '%'
+    min_year = request.json['min_year'] if 'min_year' in request.json else 0
+    max_year = request.json['max_year'] if 'max_year' in request.json else 9999
+    min_cite = request.json['min_cite'] if 'min_cite' in request.json else 0
+    max_cite = request.json['max_cite'] if 'max_cite' in request.json else 999999
+    rank_var = request.json['rank'] if 'rank' in request.json else 'none'
+
+    # check if min < max
+    if min_year > max_year or min_cite > max_cite:
+        abort(400)
+
+    # get
+    gr, n = graph.generate_graph_title_search(title, min_year, max_year, min_cite, max_cite, rank_var)
     # gr = gr.to_dict(orient='records')
     if not gr:
         abort(404)
