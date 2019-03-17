@@ -16,7 +16,7 @@ def get_article_all():
 
     # limit number of articles
     article_limit = 100
-    if not request.json or 'article_limit' not in request.json:
+    if not request.data or not request.json or 'article_limit' not in request.json:
         article_limit = 100
     else:
         article_limit = request.json['article_limit']
