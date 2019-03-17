@@ -84,5 +84,5 @@ df_ref.to_sql('citation', con=conn, index=False, if_exists='append')
 print('Wrote {:} new citations to SQLite DB'.format(df_ref.shape[0]))
 
 # table for storing citation count
-conn.execute("CREATE TABLE IF NOT EXISTS citecnt (id INTEGER PRIMARY KEY UNIQUE, citations INTEGER)")
-conn.execute("INSERT INTO citecnt SELECT bpmid AS id, COUNT(1) AS citations FROM citation GROUP BY bpmid")
+conn.execute("CREATE TABLE IF NOT EXISTS citecount (id INTEGER PRIMARY KEY UNIQUE, citations INTEGER)")
+conn.execute("INSERT INTO citecount SELECT bpmid AS id, COUNT(1) AS citations FROM citation GROUP BY bpmid")
