@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from config import app_config
+import nltk
 import os
 
 
@@ -10,6 +11,9 @@ app = Flask(__name__, instance_relative_config=True)
 config_name = "development"
 app.config.from_object(app_config[config_name])
 db = SQLAlchemy(app)
+
+# download nltk corpus when starting flask if necessary
+nltk.download('punkt')
 
 # imports
 from app import routes, models, db_query, graph, errors
