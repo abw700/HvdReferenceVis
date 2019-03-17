@@ -43,9 +43,9 @@ def get_id_by_incoming_count(min_cite, max_cite):
     # statement
     meta = MetaData(bind=db.engine)
     meta.reflect()
-    citecnt = meta.tables['citecnt']
-    stmt = select([citecnt.c.id, citecnt.c.citations]).where(
-        citecnt.c.citations >= min_cite).where(citecnt.c.citations <= max_cite)
+    citecount = meta.tables['citecount']
+    stmt = select([citecount.c.id, citecount.c.citations]).where(
+        citecount.c.citations >= min_cite).where(citecount.c.citations <= max_cite)
 
     # read
     result = pd.read_sql(stmt, db.engine)
@@ -59,8 +59,8 @@ def get_incoming_count_by_id(id_list):
     # statement
     meta = MetaData(bind=db.engine)
     meta.reflect()
-    citecnt = meta.tables['citecnt']
-    stmt = select([citecnt.c.id, citecnt.c.citations], citecnt.c.id.in_(tuple(id_list)))
+    citecount = meta.tables['citecount']
+    stmt = select([citecount.c.id, citecount.c.citations], citecount.c.id.in_(tuple(id_list)))
 
     # read
     result = pd.read_sql(stmt, db.engine)

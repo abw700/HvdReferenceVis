@@ -52,10 +52,8 @@ def generate_graph_title_search(title_search, min_year, max_year, min_cite, max_
         # those not in should be visually represented differently.
         if n in ids:
             G.node[n]['search_returned_paper'] = True
-            G.node[n]['title'] = df_paper_title_search[df_paper_title_search['id'] == n]['title'].values[0]
         else:
             G.node[n]['search_returned_paper'] = False
-            G.node[n]['title'] = '' # don't put in title for these nodes for now
 
         # create int variable that tells us rank of each node (compared with all nodes returned)
         G.node[n]['rank'] = df_rnk[df_rnk['id'] == n]['rank'].values[0]
