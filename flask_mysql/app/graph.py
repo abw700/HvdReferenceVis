@@ -3,6 +3,38 @@ import pandas as pd
 import networkx as nx
 from networkx.readwrite import json_graph
 
+def generate_graph_outgoing_citations(starting_pmid, citation_depth):
+    ''' GET graph a number of depth CITATIONs away, '''
+
+    # GET outgoing citations dataframe that will be built on with evnetual additional depth_nodes
+    df_citation_out, n = db_query.get_citations_by_id(ids, id_type='from')
+
+    # Iterate through the list and continue to
+    df_articles_graph = df_citations_out;
+
+    df_next_iteration_of_search = df_articles_graph
+    depth_iterations = 1
+    while depth_iterations < citation_depth:
+        # copy the df_next_iteration_of_search for iteration purposes (so we can then clear it out)
+        df_next_iteration_copy = df_next_iteration_of_search
+        df_next_iteration_of_search.clear()
+        # search through the next round of articles
+        for cited_article_pmid in df_next_iteration_copy:
+            # add the current batch of nodes to the master list...
+            depth_iterations += 1
+            df_individual_citations_list = pd.DataFrame(models.Citation().get_outgoing(cited_article_pmid))
+            # add this to the larger list of articles we're seraching for...
+            df_next_iteration_of_search.append(df_individual_citations_list)
+            # add to higher level graph for nodes...
+            df_articles_graph.append(df_individual_citations_list)
+
+            # need to handle citation links?!?
+            # TODO
+
+    # At this point, df_articles_graph should be comprised of aLL of the nodes at that depth.
+
+
+
 def generate_graph_title_search(title_search, min_year, max_year, min_cite, max_cite, rank_var='none'):
     '''GET graph by year'''
 
@@ -20,7 +52,7 @@ def generate_graph_title_search(title_search, min_year, max_year, min_cite, max_
     df_citation_count = df_citation_count[cnt_mask]
     df_paper_title_search = df_paper_title_search.merge(df_citation_count, how='inner', on='id', copy=False)
     ids = df_paper_title_search['id'].tolist()
-    
+
     # get citations
     df_citation_out, n = db_query.get_citations_by_id(ids, id_type='from')
     df_citation_in, n = db_query.get_citations_by_id(ids, id_type='to')
