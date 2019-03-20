@@ -10,7 +10,7 @@ def index():
     return 'Reference visualization rocks!!!'
 
 # article list for all articles
-@app.route('/article', methods=['POST'])
+@app.route('/article', methods=['GET'])
 def get_article_all():
     '''GET all articles'''
 
@@ -28,7 +28,6 @@ def get_article_all():
     articles = [obj.to_dict() for obj in articles]
     return jsonify(article=articles), 200
 
-
 # article by id
 @app.route('/article/<int:article_id>', methods=['GET'])
 def get_article_by_id(article_id):
@@ -42,7 +41,7 @@ def get_article_by_id(article_id):
     return jsonify(article=articles), 200
 
 # article within the period
-@app.route('/article/period', methods=['POST'])
+@app.route('/article/period', methods=['GET'])
 def get_article_id_in_period():
     '''GET articles within the year timeframe'''
 
@@ -64,7 +63,7 @@ def get_article_id_in_period():
     return jsonify(count=n, article=articles), 200
 
 # article within the range of number of incoming citations
-@app.route('/article/citation-range', methods=['POST'])
+@app.route('/article/citation-range', methods=['GET'])
 def get_article_id_by_citationcount():
     '''GET articles within incoming count limit'''
 
@@ -127,7 +126,7 @@ def get_journal_by_id(journal_id):
     return jsonify(journal=journals), 200
 
 # graph
-@app.route('/graph', methods=['POST'])
+@app.route('/graph', methods=['GET'])
 def get_graph_in_period():
     '''GET graph within the year timeframe'''
 
@@ -137,7 +136,7 @@ def get_graph_in_period():
     max_year = request.json['max_year'] if 'max_year' in request.json else 9999
     min_cite = request.json['min_cite'] if 'min_cite' in request.json else 0
     max_cite = request.json['max_cite'] if 'max_cite' in request.json else 999999
-    rank_var = request.json['rank'] if 'rank' in request.json else 'none'
+    rank_var = request.json['rank'] if 'rank' in request.json else 'citations'
 
     # check if min < max
     if min_year > max_year or min_cite > max_cite:
@@ -145,13 +144,12 @@ def get_graph_in_period():
 
     # get
     gr, n = graph.generate_graph(min_year, max_year, min_cite, max_cite, rank_var)
-    # gr = gr.to_dict(orient='records')
     if not gr:
         abort(404)
     return jsonify(count=n, graph=gr), 200
 
 # graph title SEARCH
-@app.route('/graph/title', methods=['POST'])
+@app.route('/graph/title', methods=['GET'])
 def get_graph_in_period_with_title():
     '''GET graph within the year timeframe, with provided title (SEARCH)'''
 
@@ -162,7 +160,7 @@ def get_graph_in_period_with_title():
     max_year = request.json['max_year'] if 'max_year' in request.json else 9999
     min_cite = request.json['min_cite'] if 'min_cite' in request.json else 0
     max_cite = request.json['max_cite'] if 'max_cite' in request.json else 999999
-    rank_var = request.json['rank'] if 'rank' in request.json else 'none'
+    rank_var = request.json['rank'] if 'rank' in request.json else 'citations'
 
     # check if min < max
     if min_year > max_year or min_cite > max_cite:
@@ -170,7 +168,24 @@ def get_graph_in_period_with_title():
 
     # get
     gr, n = graph.generate_graph_title_search(title, min_year, max_year, min_cite, max_cite, rank_var)
-    # gr = gr.to_dict(orient='records')
+    if not gr:
+        abort(404)
+    return jsonify(count=n, graph=gr), 200
+
+# graph started from 1 article ID
+@app.route('/graph/<int:article_id>', methods=['GET'])
+def get_graph_from_id(article_id):
+    '''GET graph from one article ID'''
+
+    # default depth to 2, limit depth to 3
+    if not request.data or not request.json or 'depth' not in request.json:
+        depth = 2
+    else:
+        depth = min(request.json['depth'], 3)
+    rank_var = request.json['rank'] if 'rank' in request.json else 'citations'
+
+    # get
+    gr, n = graph.generate_graph_outgoing_citations(article_id, depth)
     if not gr:
         abort(404)
     return jsonify(count=n, graph=gr), 200

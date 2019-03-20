@@ -3,39 +3,59 @@ import pandas as pd
 import networkx as nx
 from networkx.readwrite import json_graph
 
-def generate_graph_outgoing_citations(starting_pmid, citation_depth):
+def generate_graph_outgoing_citations(starting_pmid, citation_depth, rank_var='citations'):
     ''' GET graph a number of depth CITATIONs away, '''
 
-    # GET outgoing citations dataframe that will be built on with evnetual additional depth_nodes
-    df_citation_out, n = db_query.get_citations_by_id(ids, id_type='from')
-
-    # Iterate through the list and continue to
-    df_articles_graph = df_citations_out;
-
-    df_next_iteration_of_search = df_articles_graph
+    # iterate through the depth, starting with starting_pmid, store dataframe result in a dict
+    l_ = []
     depth_iterations = 1
-    while depth_iterations < citation_depth:
-        # copy the df_next_iteration_of_search for iteration purposes (so we can then clear it out)
-        df_next_iteration_copy = df_next_iteration_of_search
-        df_next_iteration_of_search.clear()
-        # search through the next round of articles
-        for cited_article_pmid in df_next_iteration_copy:
-            # add the current batch of nodes to the master list...
-            depth_iterations += 1
-            df_individual_citations_list = pd.DataFrame(models.Citation().get_outgoing(cited_article_pmid))
-            # add this to the larger list of articles we're seraching for...
-            df_next_iteration_of_search.append(df_individual_citations_list)
-            # add to higher level graph for nodes...
-            df_articles_graph.append(df_individual_citations_list)
+    ids = [starting_pmid]
+    while depth_iterations <= citation_depth:
+        df_citation_out, n = db_query.get_citations_by_id(ids, id_type='from')
+        df_citation_out['depth'] = depth_iterations
+        # add the current batch of nodes to the master list...
+        ids = df_citation_out['bpmid'].tolist()
+        l_.append(df_citation_out)
+        depth_iterations += 1
 
-            # need to handle citation links?!?
-            # TODO
+    # combine all iterations
+    df = pd.concat(l_, ignore_index=True)
 
-    # At this point, df_articles_graph should be comprised of aLL of the nodes at that depth.
+    # build graph
+    l_ = df[['apmid', 'bpmid']].values.tolist()
+    G = nx.Graph()
+    G.add_edges_from(l_)
 
+    # calculate rank
+    # use page rank
+    if rank_var == 'pagerank':
+        rnk_dict = nx.pagerank(G)
+        df_rnk = pd.DataFrame([rnk_dict], index=[rank_var]).T
+        df_rnk = df_rnk.reset_index().rename(columns={'index':'id'})
+    # use citation count
+    if rank_var == 'citations':
+        df_cnt, n = db_query.get_incoming_count_by_id(G.nodes())
+        df_rnk = pd.DataFrame(G.nodes(), columns=['id']).merge(df_cnt, how='left', on='id', copy=False)
+        df_rnk.fillna(0, inplace=True)
+    df_rnk['rank'] = df_rnk[rank_var].rank(method='dense', ascending=False)
+    dict_rnk = df_rnk[['id', 'rank']].to_dict(orient='records')
 
+    # add node metadata
+    for n in G:
+        # label node with the degree level (i.e. 0 = start node, 1 = first depth layer)
+        if n == starting_pmid:
+            G.node[n]['degree'] = 0
+        else:
+            G.node[n]['degree'] = int(df[df['bpmid'] == n]['depth'].values[0])
 
-def generate_graph_title_search(title_search, min_year, max_year, min_cite, max_cite, rank_var='none'):
+        # create int variable that tells us rank of each node (compared with all nodes returned)
+        G.node[n]['rank'] = df_rnk[df_rnk['id'] == n]['rank'].values[0]
+
+    # export graph to json
+    jsonData = json_graph.node_link_data(G)
+    return jsonData, len(l_)
+
+def generate_graph_title_search(title_search, min_year, max_year, min_cite, max_cite, rank_var='citations'):
     '''GET graph by year'''
 
     # GET articles with the search title parameters
@@ -64,19 +84,18 @@ def generate_graph_title_search(title_search, min_year, max_year, min_cite, max_
     G.add_edges_from(l_)
 
     # calculate rank
-    if rank_var != 'none':
-        # use page rank
-        if rank_var == 'pagerank':
-            rnk_dict = nx.pagerank(G)
-            df_rnk = pd.DataFrame([rnk_dict], index=[rank_var]).T
-            df_rnk = df_rnk.reset_index().rename(columns={'index':'id'})
-        # use citation count
-        if rank_var == 'citations':
-            df_cnt, n = db_query.get_incoming_count_by_id(G.nodes())
-            df_rnk = pd.DataFrame(G.nodes(), columns=['id']).merge(df_cnt, how='left', on='id', copy=False)
-            df_rnk.fillna(0, inplace=True)
-        df_rnk['rank'] = df_rnk[rank_var].rank(method='dense', ascending=False)
-        dict_rnk = df_rnk[['id', 'rank']].to_dict(orient='records')
+    # use page rank
+    if rank_var == 'pagerank':
+        rnk_dict = nx.pagerank(G)
+        df_rnk = pd.DataFrame([rnk_dict], index=[rank_var]).T
+        df_rnk = df_rnk.reset_index().rename(columns={'index':'id'})
+    # use citation count
+    if rank_var == 'citations':
+        df_cnt, n = db_query.get_incoming_count_by_id(G.nodes())
+        df_rnk = pd.DataFrame(G.nodes(), columns=['id']).merge(df_cnt, how='left', on='id', copy=False)
+        df_rnk.fillna(0, inplace=True)
+    df_rnk['rank'] = df_rnk[rank_var].rank(method='dense', ascending=False)
+    dict_rnk = df_rnk[['id', 'rank']].to_dict(orient='records')
 
     # add node metadata
     for n in G:
@@ -94,7 +113,7 @@ def generate_graph_title_search(title_search, min_year, max_year, min_cite, max_
     jsonData = json_graph.node_link_data(G)
     return jsonData, len(l_)
 
-def generate_graph(min_year, max_year, min_cite, max_cite, rank_var='none'):
+def generate_graph(min_year, max_year, min_cite, max_cite, rank_var='citations'):
     '''get graph by year'''
 
     # get articles within year range
@@ -117,19 +136,18 @@ def generate_graph(min_year, max_year, min_cite, max_cite, rank_var='none'):
     G.add_edges_from(l_)
 
     # calculate rank
-    if rank_var != 'none':
-        # use page rank
-        if rank_var == 'pagerank':
-            rnk_dict = nx.pagerank(G)
-            df_rnk = pd.DataFrame([rnk_dict], index=[rank_var]).T
-            df_rnk = df_rnk.reset_index().rename(columns={'index':'id'})
-        # use citation count
-        if rank_var == 'citations':
-            df_cnt, n = db_query.get_incoming_count_by_id(G.nodes())
-            df_rnk = pd.DataFrame(G.nodes(), columns=['id']).merge(df_cnt, how='left', on='id', copy=False)
-            df_rnk.fillna(0, inplace=True)
-        df_rnk['rank'] = df_rnk[rank_var].rank(method='dense', ascending=False)
-        dict_rnk = df_rnk[['id', 'rank']].to_dict(orient='records')
+    # use page rank
+    if rank_var == 'pagerank':
+        rnk_dict = nx.pagerank(G)
+        df_rnk = pd.DataFrame([rnk_dict], index=[rank_var]).T
+        df_rnk = df_rnk.reset_index().rename(columns={'index':'id'})
+    # use citation count
+    if rank_var == 'citations':
+        df_cnt, n = db_query.get_incoming_count_by_id(G.nodes())
+        df_rnk = pd.DataFrame(G.nodes(), columns=['id']).merge(df_cnt, how='left', on='id', copy=False)
+        df_rnk.fillna(0, inplace=True)
+    df_rnk['rank'] = df_rnk[rank_var].rank(method='dense', ascending=False)
+    dict_rnk = df_rnk[['id', 'rank']].to_dict(orient='records')
 
     # add node metadata
     for n in G:
