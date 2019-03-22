@@ -10,7 +10,7 @@ def index():
     return 'Reference visualization rocks!!!'
 
 # article list for all articles
-@app.route('/article', methods=['GET'])
+@app.route('/article', methods=['POST'])
 def get_article_all():
     '''GET all articles'''
 
@@ -41,7 +41,7 @@ def get_article_by_id(article_id):
     return jsonify(article=articles), 200
 
 # article within the period
-@app.route('/article/period', methods=['GET'])
+@app.route('/article/period', methods=['POST'])
 def get_article_id_in_period():
     '''GET articles within the year timeframe'''
 
@@ -63,7 +63,7 @@ def get_article_id_in_period():
     return jsonify(count=n, article=articles), 200
 
 # article within the range of number of incoming citations
-@app.route('/article/citation-range', methods=['GET'])
+@app.route('/article/citation-range', methods=['POST'])
 def get_article_id_by_citationcount():
     '''GET articles within incoming count limit'''
 
@@ -126,7 +126,7 @@ def get_journal_by_id(journal_id):
     return jsonify(journal=journals), 200
 
 # graph
-@app.route('/graph', methods=['GET'])
+@app.route('/graph', methods=['POST'])
 def get_graph_in_period():
     '''GET graph within the year timeframe'''
 
@@ -149,7 +149,7 @@ def get_graph_in_period():
     return jsonify(count=n, graph=gr), 200
 
 # graph title SEARCH
-@app.route('/graph/title', methods=['GET'])
+@app.route('/graph/title', methods=['POST'])
 def get_graph_in_period_with_title():
     '''GET graph within the year timeframe, with provided title (SEARCH)'''
 
@@ -173,7 +173,7 @@ def get_graph_in_period_with_title():
     return jsonify(count=n, graph=gr), 200
 
 # graph started from 1 article ID
-@app.route('/graph/<int:article_id>', methods=['GET'])
+@app.route('/graph/<int:article_id>', methods=['POST'])
 def get_graph_from_id(article_id):
     '''GET graph from one article ID'''
 
@@ -189,3 +189,4 @@ def get_graph_from_id(article_id):
     if not gr:
         abort(404)
     return jsonify(count=n, graph=gr), 200
+
