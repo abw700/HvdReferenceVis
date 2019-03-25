@@ -2,6 +2,7 @@ from app import db_query, models
 import pandas as pd
 import networkx as nx
 from networkx.readwrite import json_graph
+from difflib import get_close_matches
 
 def generate_graph_outgoing_citations(starting_pmid, citation_depth, rank_var='citations'):
     ''' GET graph a number of depth CITATIONs away, '''
@@ -59,7 +60,17 @@ def generate_graph_title_search(title_search, min_year, max_year, min_cite, max_
     '''GET graph by year'''
 
     # GET articles with the search title parameters
+    title_search = title_search.replace("'", "")
     df_paper_title_search, n = db_query.get_ids_by_title_search(title_search)
+
+    # filter out those that have low difflib score
+    matches = get_close_matches(title_search, df_paper_title_search['title'], n=20, cutoff=0.3)
+    df_paper_title_search = df_paper_title_search[df_paper_title_search['title'].isin(matches)]
+
+    # if empty, return and empty graph
+    if not matches:
+        print('No matched title')
+        return json_graph.node_link_data(nx.Graph()), 0
 
     # keep only articles within min_year and max_year
     year_mask = (df_paper_title_search['pubyear'] >= min_year) & (df_paper_title_search['pubyear'] <= max_year)
