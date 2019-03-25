@@ -71,6 +71,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb
 
 # pyenv
 .python-version
@@ -84,6 +85,8 @@ celerybeat-schedule
 # Environments
 .env
 .venv
+.direnv
+.envrc
 env/
 venv/
 ENV/
@@ -103,13 +106,8 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# data
-data/
-targz/
-download/
-oa_file_list.txt 
+# db
 *.db
 
 # IDE
-.vscode/
-*.ipynb
+.vscode

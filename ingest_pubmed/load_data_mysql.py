@@ -59,7 +59,7 @@ conn.execute("DROP TABLE IF EXISTS journal")
 conn.execute("DROP TABLE IF EXISTS article")
 conn.execute("DROP TABLE IF EXISTS citation")
 conn.execute("CREATE TABLE IF NOT EXISTS journal (id INTEGER PRIMARY KEY UNIQUE AUTO_INCREMENT, name text)")
-conn.execute("CREATE TABLE IF NOT EXISTS article (id INTEGER PRIMARY KEY UNIQUE, title text, abstract text, pubyear integer, jid integer)")
+conn.execute("CREATE TABLE IF NOT EXISTS article (id INTEGER PRIMARY KEY UNIQUE, title text, abstract text, pubyear integer, jid integer, keywords text)")
 conn.execute("CREATE TABLE IF NOT EXISTS citation (id INTEGER PRIMARY KEY UNIQUE AUTO_INCREMENT, apmid integer, bpmid integer)")
 result = conn.execute("SHOW TABLES")
 print('List if tables in db...')
@@ -77,8 +77,8 @@ print('Wrote {:} new journals to MySQL DB'.format(df_journal.shape[0]))
 # get list of jid and put into article
 df_journal_exists = pd.read_sql('journal', con=conn)
 df_article = df_article.merge(df_journal_exists, how='inner', left_on='journal', right_on='name')
-df_article = df_article[['pmid', 'title', 'abstract', 'pubyear', 'id']]
-df_article.columns = ['id', 'title', 'abstract', 'pubyear', 'jid']
+df_article = df_article[['pmid', 'title', 'abstract', 'pubyear', 'id', 'keywords']]
+df_article.columns = ['id', 'title', 'abstract', 'pubyear', 'jid', 'keywords']
 
 # check if article already in db if it is, don't add
 df_article['id'] = df_article['id'].astype(int)
