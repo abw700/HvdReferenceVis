@@ -89,3 +89,36 @@ def get_citations_by_id(id_list, id_type=['from', 'to']):
     result = pd.read_sql(stmt, db.engine)
     result = result.drop_duplicates()
     return result, result.shape[0]
+
+
+def get_network_by_id(starting_pmid, citation_depth=1):
+    '''get citation network (both incoming and outgoing) from starting pmid'''
+    
+    # iterate through the depth, starting with starting_pmid, store dataframe result in a dict
+    l_ = []
+
+    # going forward
+    depth_iterations = 1
+    ids = [starting_pmid]
+    while depth_iterations <= citation_depth:
+        df_citation_out, n = get_citations_by_id(ids, id_type='from')
+        df_citation_out['depth'] = depth_iterations
+        # add the current batch of nodes to the master list...
+        ids = df_citation_out['bpmid'].tolist()
+        l_.append(df_citation_out)
+        depth_iterations += 1
+
+    # going backward
+    depth_iterations = 1
+    ids = [starting_pmid]
+    while depth_iterations <= citation_depth:
+        df_citation_in, n = get_citations_by_id(ids, id_type='to')
+        df_citation_in['depth'] = depth_iterations
+        # add the current batch of nodes to the master list...
+        ids = df_citation_in['apmid'].tolist()
+        l_.append(df_citation_in)
+        depth_iterations += 1
+
+    # combine all iterations
+    return pd.concat(l_, ignore_index=True)
+
