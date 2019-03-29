@@ -155,6 +155,12 @@ def get_graph_in_period_with_title():
 
     if not request.json:
         abort(400)
+    # default depth to 2, limit depth to 3
+    if not request.data or not request.json or 'depth' not in request.json:
+        depth = 2
+    else:
+        depth = min(request.json['depth'], 3)
+    rank_var = request.json['rank'] if 'rank' in request.json else 'citations'
     title = request.json['title'] if 'title' in request.json else '%'
     min_year = request.json['min_year'] if 'min_year' in request.json else 0
     max_year = request.json['max_year'] if 'max_year' in request.json else 9999
@@ -167,7 +173,7 @@ def get_graph_in_period_with_title():
         abort(400)
 
     # get
-    gr, n = graph.generate_graph_title_search(title, min_year, max_year, min_cite, max_cite, rank_var)
+    gr, n = graph.generate_graph_title_search(title, depth, min_year, max_year, min_cite, max_cite, rank_var)
     if not gr:
         abort(404)
     return jsonify(count=n, graph=gr), 200
