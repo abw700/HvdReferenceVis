@@ -38,7 +38,7 @@ def generate_graph_outgoing_citations(starting_pmid, citation_depth, rank_var='c
     return jsonData, len(l_)
 
 
-def generate_graph_title_search(title_search, citation_depth, min_year, max_year, min_cite, max_cite, rank_var='citations'):
+def generate_graph_title_search(title_search, citation_depth, min_year, max_year, min_cite, max_cite, rank_var='citations', cutoff=0.3):
     '''GET graph by year'''
 
     # GET articles with the search title parameters
@@ -46,7 +46,7 @@ def generate_graph_title_search(title_search, citation_depth, min_year, max_year
     df_paper_title_search, n = db_query.get_ids_by_title_search(title_search)
 
     # filter out those that have low difflib score
-    matches = get_close_matches(title_search, df_paper_title_search['title'], n=20, cutoff=0.3)
+    matches = get_close_matches(title_search, df_paper_title_search['title'], n=20, cutoff=cutoff)
     df_paper_title_search = df_paper_title_search[df_paper_title_search['title'].isin(matches)]
 
     # if empty, return and empty graph

@@ -160,6 +160,11 @@ def get_graph_in_period_with_title():
         depth = 2
     else:
         depth = min(request.json['depth'], 3)
+    # default cutoff to 0.3, limit to 0.1 to 0.9
+    if 'cutoff' not in request.json:
+        cutoff = 0.3
+    else:
+        cutoff = max(min(request.json['cutoff'], 0.9), 0.1)
     rank_var = request.json['rank'] if 'rank' in request.json else 'citations'
     title = request.json['title'] if 'title' in request.json else '%'
     min_year = request.json['min_year'] if 'min_year' in request.json else 0
@@ -173,7 +178,7 @@ def get_graph_in_period_with_title():
         abort(400)
 
     # get
-    gr, n = graph.generate_graph_title_search(title, depth, min_year, max_year, min_cite, max_cite, rank_var)
+    gr, n = graph.generate_graph_title_search(title, depth, min_year, max_year, min_cite, max_cite, rank_var, cutoff)
     if not gr:
         abort(404)
     return jsonify(count=n, graph=gr), 200
