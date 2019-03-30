@@ -66,6 +66,12 @@ def generate_graph_title_search(title_search, citation_depth, min_year, max_year
     df_paper_title_search = df_paper_title_search.merge(df_citation_count, how='inner', on='id', copy=False)
     ids = df_paper_title_search['id'].tolist()
 
+    # if no match, just return a blank graph
+    if not ids:
+        G = nx.Graph()
+        jsonData = json_graph.node_link_data(G)
+        return jsonData, 0
+
     # iterate all starting pmids to get their citations
     cite_list = []
     for starting_pmid in ids:
