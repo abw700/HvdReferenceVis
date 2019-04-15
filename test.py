@@ -176,3 +176,17 @@ def test_graph_id(client):
     json_dict = {'depth': -3, 'rank': 'cite'}
     response = post_json(client, "/graph/26272696", json_dict)
     assert response.status_code == 200
+
+# test /graph/keyword
+def test_graph_keyword(client):
+    # correct json body, matched keyword, return 200
+    json_dict = {'depth': 3, 'keyword': 'Hepatocellular carcinoma'}
+    response = post_json(client, "/graph/title", json_dict)
+    assert response.status_code == 200
+    # correct json body, no match, return 200
+    json_dict = {'depth': 3, 'keyword': 'justasearchthatnotmatched'}
+    response = post_json(client, "/graph/title", json_dict)
+    # correct json body, matched two keywords and title, return 200
+    json_dict = {'depth': 3, 'title': 'liver cancer', 'keyword': 'Hepatocellular carcinoma,cancer'}
+    response = post_json(client, "/graph/title", json_dict)
+    assert response.status_code == 200

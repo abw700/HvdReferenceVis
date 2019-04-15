@@ -17,23 +17,51 @@ def get_id_by_year(min_year, max_year):
     result = pd.read_sql(stmt, db.engine)
     return result, result.shape[0]
 
-# SEARCH by title
-def get_ids_by_title_search(title_search):
-    '''GET article by title search'''
+# SEARCH by title, keyword
+def get_ids_by_title_keyword(title_search, keyword_search):
+    '''GET article by title and/or keyword search'''
 
     # Need to break the title_search down into tokens, and convert to RAW SQL statement
-    # Use nltk
-    title_tokens = word_tokenize(title_search)
-    stmt = "SELECT * FROM article WHERE "
-    title_token_counter = 0
-    for title_part in title_tokens:
-        if title_token_counter != 0:
-            stmt += "AND "
-        stmt += "title LIKE '%" + title_part + "%' "
-        title_token_counter += 1
+    # first part of SQL statement 
+    stmt = "SELECT * FROM article "
 
-    # read
-    result = pd.read_sql(stmt, db.engine)
+    # if no search, just return blank
+    if title_search == "%" and keyword_search == "%":
+        stmt += "LIMIT 1"
+        result = pd.read_sql(stmt, db.engine)
+        result = result.iloc[0:0]
+    else:
+        stmt += "WHERE "
+        # title
+        if title_search != "%":
+            # Use nltk to tokenize
+            title_tokens = word_tokenize(title_search)
+        
+            # add title to stmt
+            title_token_counter = 0
+            for title_part in title_tokens:
+                if title_token_counter != 0:
+                    stmt += "AND "
+                stmt += "title LIKE '%" + title_part + "%' "
+                title_token_counter += 1
+            stmt += "AND " if keyword_search != "%" else ""
+
+        # keyword
+        if keyword_search != "%":
+            # separate keywords by commas
+            keyword_tokens = keyword_search.replace(', ', ',').split(',')
+
+            # stmt += "AND "
+            # add keyword
+            keyword_token_counter = 0
+            for keyword_part in keyword_tokens:
+                if keyword_token_counter != 0:
+                    stmt += "AND "
+                stmt += "keywords LIKE '%" + keyword_part + "%' "
+                keyword_token_counter += 1
+
+        # read
+        result = pd.read_sql(stmt, db.engine)
     return result, result.shape[0]
 
 

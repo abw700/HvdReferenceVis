@@ -150,15 +150,17 @@ def get_graph_in_period_with_title():
     min_year, max_year = check_year(request)
     min_cite, max_cite = check_cite(request)
     
-    # default title
+    # default title, keyword
     title = request.json['title'] if 'title' in request.json else '%'
+    keywords = request.json['keyword'] if 'keyword' in request.json else '%'
 
     # get
     gr, n = graph.generate_graph_title_search(
-        title, depth, min_year, max_year, min_cite, max_cite, rank_var, cutoff)
+        title, keywords, depth, min_year, max_year, min_cite, max_cite, rank_var, cutoff)
     if not gr:
         abort(404)
     return jsonify(count=n, graph=gr), 200
+
 
 # graph started from 1 article ID
 @app.route('/graph/<int:article_id>', methods=['POST'])
