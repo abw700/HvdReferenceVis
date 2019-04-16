@@ -155,7 +155,7 @@ def get_graph_in_period_with_title():
     keywords = request.json['keyword'] if 'keyword' in request.json else '%'
 
     # get
-    gr, n = graph.generate_graph_title_search(
+    gr, n = graph.generate_graph_title_keyword(
         title, keywords, depth, min_year, max_year, min_cite, max_cite, rank_var, cutoff)
     if not gr:
         abort(404)

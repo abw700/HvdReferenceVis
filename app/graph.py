@@ -38,14 +38,13 @@ def generate_graph_outgoing_citations(starting_pmid, citation_depth, rank_var='c
     return jsonData, len(l_)
 
 
-def generate_graph_title_search(title_search, keyword_search, citation_depth, min_year, max_year, min_cite, max_cite, rank_var='citations', cutoff=0.3):
+def generate_graph_title_keyword(title_search, keyword_search, citation_depth, min_year, max_year, min_cite, max_cite, rank_var='citations', cutoff=0.3):
     '''GET graph by year'''
 
     # GET articles with the search title and keyword parameters
     title_search = title_search.replace("'", "")
     keyword_search = keyword_search.replace("'", "")
     df_paper_title_kw, n = db_query.get_ids_by_title_keyword(title_search, keyword_search)
-    print(df_paper_title_kw)
 
     # filter out those that have low difflib score
     if title_search != "%":

@@ -17,7 +17,7 @@ def get_id_by_year(min_year, max_year):
     result = pd.read_sql(stmt, db.engine)
     return result, result.shape[0]
 
-# SEARCH by title, keyword
+# SEARCH by title and/or keyword
 def get_ids_by_title_keyword(title_search, keyword_search):
     '''GET article by title and/or keyword search'''
 
@@ -25,15 +25,15 @@ def get_ids_by_title_keyword(title_search, keyword_search):
     # first part of SQL statement 
     stmt = "SELECT * FROM article "
 
-    # if no search, just return blank
-    if title_search == "%" and keyword_search == "%":
+    # if no search or search using wildcard `%`, just return blank
+    if (title_search == "%" and keyword_search == "%") or (title_search == "" and keyword_search == ""):
         stmt += "LIMIT 1"
         result = pd.read_sql(stmt, db.engine)
         result = result.iloc[0:0]
     else:
         stmt += "WHERE "
         # title
-        if title_search != "%":
+        if title_search != "%" and title_search != "":
             # Use nltk to tokenize
             title_tokens = word_tokenize(title_search)
         
@@ -44,10 +44,13 @@ def get_ids_by_title_keyword(title_search, keyword_search):
                     stmt += "AND "
                 stmt += "title LIKE '%" + title_part + "%' "
                 title_token_counter += 1
-            stmt += "AND " if keyword_search != "%" else ""
+            
+        # if search both title and keyword, need `AND` in between
+        if title_search != "%" and title_search != "" and keyword_search != "%" and keyword_search != "":
+            stmt += "AND "
 
         # keyword
-        if keyword_search != "%":
+        if keyword_search != "%" and keyword_search != "":
             # separate keywords by commas
             keyword_tokens = keyword_search.replace(', ', ',').split(',')
 
