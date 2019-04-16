@@ -23,3 +23,9 @@ export FLASK_CONFIG=development (On windows, use "set FLASK_CONFIG=development" 
 python main.py
 ```
 To test APIs, use the Postman collection in 'Development Resources/API' section in Google Drive
+
+To run test with code coverage:
+```
+pytest --cov=app -p no:warnings test.py --cov-report html
+```
+Test coverage report will be created in './htmlcov/index.html'

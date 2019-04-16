@@ -38,33 +38,41 @@ def generate_graph_outgoing_citations(starting_pmid, citation_depth, rank_var='c
     return jsonData, len(l_)
 
 
-def generate_graph_title_search(title_search, citation_depth, min_year, max_year, min_cite, max_cite, rank_var='citations'):
+def generate_graph_title_keyword(title_search, keyword_search, citation_depth, min_year, max_year, min_cite, max_cite, rank_var='citations', cutoff=0.3):
     '''GET graph by year'''
 
-    # GET articles with the search title parameters
+    # GET articles with the search title and keyword parameters
     title_search = title_search.replace("'", "")
-    df_paper_title_search, n = db_query.get_ids_by_title_search(title_search)
+    keyword_search = keyword_search.replace("'", "")
+    df_paper_title_kw, n = db_query.get_ids_by_title_keyword(title_search, keyword_search)
 
     # filter out those that have low difflib score
-    matches = get_close_matches(title_search, df_paper_title_search['title'], n=20, cutoff=0.3)
-    df_paper_title_search = df_paper_title_search[df_paper_title_search['title'].isin(matches)]
+    if title_search != "%":
+        matches = get_close_matches(title_search, df_paper_title_kw['title'], n=20, cutoff=cutoff)
+        df_paper_title_kw = df_paper_title_kw[df_paper_title_kw['title'].isin(matches)]
 
     # if empty, return and empty graph
-    if not matches:
-        print('No matched title')
+    if len(df_paper_title_kw) == 0:
+        print('No matched title or keyword')
         return json_graph.node_link_data(nx.Graph()), 0
 
     # keep only articles within min_year and max_year
-    year_mask = (df_paper_title_search['pubyear'] >= min_year) & (df_paper_title_search['pubyear'] <= max_year)
-    df_paper_title_search = df_paper_title_search[year_mask]
-    ids_matched = df_paper_title_search['id'].tolist()
+    year_mask = (df_paper_title_kw['pubyear'] >= min_year) & (df_paper_title_kw['pubyear'] <= max_year)
+    df_paper_title_kw = df_paper_title_kw[year_mask]
+    ids_matched = df_paper_title_kw['id'].tolist()
 
     # keep only articles within min_cite and max_cite
     df_citation_count, n = db_query.get_incoming_count_by_id(ids_matched)
     cnt_mask = (df_citation_count['citations'] >= min_cite) & (df_citation_count['citations'] <= max_cite)
     df_citation_count = df_citation_count[cnt_mask]
-    df_paper_title_search = df_paper_title_search.merge(df_citation_count, how='inner', on='id', copy=False)
-    ids = df_paper_title_search['id'].tolist()
+    df_paper_title_kw = df_paper_title_kw.merge(df_citation_count, how='inner', on='id', copy=False)
+    ids = df_paper_title_kw['id'].tolist()
+
+    # if no match, just return a blank graph
+    if not ids:
+        G = nx.Graph()
+        jsonData = json_graph.node_link_data(G)
+        return jsonData, 0
 
     # iterate all starting pmids to get their citations
     cite_list = []
@@ -80,7 +88,7 @@ def generate_graph_title_search(title_search, citation_depth, min_year, max_year
 
     # add node metadata
     for n in G:
-        # create boolean variable that will tell us if n (the node)'s ID is in df_paper_title_search's Id column
+        # create boolean variable that will tell us if n (the node)'s ID is in df_paper_title_kw's Id column
         # those not in should be visually represented differently.
         # label node with the degree level (i.e. 0 = start node, 1 = first depth layer, -1 = first depth layer)
         # if starting node, then degree = 0

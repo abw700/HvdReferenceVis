@@ -9,6 +9,7 @@ class Article(db.Model):
     abstract = db.Column(db.String)
     pubyear = db.Column(db.Integer)
     jid = db.Column(db.Integer)
+    keywords = db.Column(db.String)
 
     def __repr__(self):
         return '<Article %r>' % (self.title)
