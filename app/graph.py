@@ -121,10 +121,13 @@ def generate_graph(min_year, max_year, min_cite, max_cite, rank_var='citations')
 
     # get articles within incoming citation range
     df_paper_ct, n = db_query.get_id_by_incoming_count(min_cite, max_cite)
-    ids_ct = df_paper_ct['id'].tolist()
+    df_paper_ct = df_paper_ct[df_paper_ct['id'].isin(ids_yr)]
+
+    # filter only top 20 articles
+    df_paper_ct = df_paper_ct.nlargest(20, 'citations')
+    ids = df_paper_ct['id'].tolist()
 
     # get citations
-    ids = list(set(ids_yr + ids_ct))
     df_citation_out, n = db_query.get_citations_by_id(ids, id_type='from')
     df_citation_in, n = db_query.get_citations_by_id(ids, id_type='to')
     df_citation = pd.concat([df_citation_in, df_citation_out], ignore_index=True)
