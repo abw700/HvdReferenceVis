@@ -152,7 +152,7 @@ def get_graph_in_period_with_title():
     
     # default title, keyword
     title = request.json['title'] if 'title' in request.json else '%'
-    keywords = request.json['keyword'] if 'keyword' in request.json else '%'
+    keywords = request.json['keywords'] if 'keywords' in request.json else '%'
 
     # get
     gr, n = graph.generate_graph_title_keyword(

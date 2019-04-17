@@ -30,7 +30,9 @@ class DevelopmentConfig(Config):
 class StagingConfig(Config):
     '''stage config'''
     DEBUG = True
+    SQLALCHEMY_ECHO = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:rWJ5is53@0.0.0.0/rvcapsrv1?charset=utf8mb4'
 
 
 # Test environment config
@@ -48,8 +50,8 @@ class ProductionConfig(Config):
 # Select app config
 app_config = {
     'development': DevelopmentConfig,
-    'production': ProductionConfig,
+    'stage': StagingConfig,
     'test': TestConfig,
-    'stage': StagingConfig
+    'production': ProductionConfig,
 }
 

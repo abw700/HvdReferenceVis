@@ -2,6 +2,7 @@ from app import db
 from sqlalchemy import select, MetaData
 from nltk.tokenize import word_tokenize
 import pandas as pd
+import sqlalchemy
 
 def get_id_by_year(min_year, max_year):
     '''get article by year'''
@@ -64,6 +65,7 @@ def get_ids_by_title_keyword(title_search, keyword_search):
                 keyword_token_counter += 1
 
         # read
+        stmt = sqlalchemy.text(stmt)
         result = pd.read_sql(stmt, db.engine)
     return result, result.shape[0]
 
