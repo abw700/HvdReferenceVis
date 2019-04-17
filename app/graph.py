@@ -123,6 +123,12 @@ def generate_graph(min_year, max_year, min_cite, max_cite, rank_var='citations')
     df_paper_ct, n = db_query.get_id_by_incoming_count(min_cite, max_cite)
     df_paper_ct = df_paper_ct[df_paper_ct['id'].isin(ids_yr)]
 
+    # if no match, just return a blank graph
+    if len(df_paper_ct) == 0:
+        G = nx.Graph()
+        jsonData = json_graph.node_link_data(G)
+        return jsonData, 0
+
     # filter only top 20 articles
     df_paper_ct = df_paper_ct.nlargest(20, 'citations')
     ids = df_paper_ct['id'].tolist()
