@@ -9,8 +9,8 @@ import os
 # create app
 app = Flask(__name__, instance_relative_config=True)
 CORS(app)
-# config_name = os.getenv('FLASK_CONFIG')
-config_name = "production"
+config_name = os.getenv('FLASK_CONFIG')
+# config_name = "production"
 app.config.from_object(app_config[config_name])
 db = SQLAlchemy(app)
 
