@@ -19,12 +19,14 @@ def get_id_by_year(min_year, max_year):
     return result, result.shape[0]
 
 # SEARCH by title and/or keyword
-def get_ids_by_title_keyword(title_search, keyword_search):
+def get_ids_by_title_keyword(title_search, keyword_search, min_year, max_year, min_cite, max_cite):
     '''GET article by title and/or keyword search'''
 
     # Need to break the title_search down into tokens, and convert to RAW SQL statement
     # first part of SQL statement 
-    stmt = "SELECT * FROM article "
+    stmt = "SELECT a.id, a.title, c.citations FROM article a "
+    stmt += "INNER JOIN citecount c ON a.id = c.id AND c.citations BETWEEN " + str(min_cite) + " AND " + str(max_cite) + " "
+    stmt += "WHERE pubyear BETWEEN " + str(min_year) + " AND " + str(max_year) + " "
 
     # if no search or search using wildcard `%`, just return blank
     if (title_search == "%" and keyword_search == "%") or (title_search == "" and keyword_search == ""):
@@ -32,7 +34,6 @@ def get_ids_by_title_keyword(title_search, keyword_search):
         result = pd.read_sql(stmt, db.engine)
         result = result.iloc[0:0]
     else:
-        stmt += "WHERE "
         # title
         if title_search != "%" and title_search != "":
             # Use nltk to tokenize
@@ -41,30 +42,22 @@ def get_ids_by_title_keyword(title_search, keyword_search):
             # add title to stmt
             title_token_counter = 0
             for title_part in title_tokens:
-                if title_token_counter != 0:
-                    stmt += "AND "
-                stmt += "title LIKE '%" + title_part + "%' "
+                stmt += "AND MATCH(title) AGAINST ('" + title_part + "') "
                 title_token_counter += 1
             
-        # if search both title and keyword, need `AND` in between
-        if title_search != "%" and title_search != "" and keyword_search != "%" and keyword_search != "":
-            stmt += "AND "
-
         # keyword
         if keyword_search != "%" and keyword_search != "":
             # separate keywords by commas
             keyword_tokens = keyword_search.replace(', ', ',').split(',')
 
-            # stmt += "AND "
             # add keyword
             keyword_token_counter = 0
             for keyword_part in keyword_tokens:
-                if keyword_token_counter != 0:
-                    stmt += "AND "
-                stmt += "keywords LIKE '%" + keyword_part + "%' "
+                stmt += "AND MATCH(keywords) AGAINST ('" + keyword_part + "') "
                 keyword_token_counter += 1
 
         # read
+        stmt += "LIMIT 20"
         stmt = sqlalchemy.text(stmt)
         result = pd.read_sql(stmt, db.engine)
     return result, result.shape[0]

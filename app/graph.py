@@ -44,40 +44,27 @@ def generate_graph_title_keyword(title_search, keyword_search, citation_depth, m
     # GET articles with the search title and keyword parameters
     title_search = title_search.replace("'", "")
     keyword_search = keyword_search.replace("'", "")
-    df_paper_title_kw, n = db_query.get_ids_by_title_keyword(title_search, keyword_search)
+    df_paper_title_kw, n = db_query.get_ids_by_title_keyword(
+        title_search, keyword_search, min_year, max_year, min_cite, max_cite)
 
     # filter out those that have low difflib score
     if title_search != "%":
-        matches = get_close_matches(title_search, df_paper_title_kw['title'], n=20, cutoff=cutoff)
-        df_paper_title_kw = df_paper_title_kw[df_paper_title_kw['title'].isin(matches)]
+        matches = get_close_matches(
+            title_search, df_paper_title_kw['title'], n=20, cutoff=cutoff)
+        df_paper_title_kw = df_paper_title_kw[df_paper_title_kw['title'].isin(
+            matches)]
 
     # if empty, return and empty graph
     if len(df_paper_title_kw) == 0:
         print('No matched title or keyword')
         return json_graph.node_link_data(nx.Graph()), 0
 
-    # keep only articles within min_year and max_year
-    year_mask = (df_paper_title_kw['pubyear'] >= min_year) & (df_paper_title_kw['pubyear'] <= max_year)
-    df_paper_title_kw = df_paper_title_kw[year_mask]
-    ids_matched = df_paper_title_kw['id'].tolist()
-
-    # keep only articles within min_cite and max_cite
-    df_citation_count, n = db_query.get_incoming_count_by_id(ids_matched)
-    cnt_mask = (df_citation_count['citations'] >= min_cite) & (df_citation_count['citations'] <= max_cite)
-    df_citation_count = df_citation_count[cnt_mask]
-    df_paper_title_kw = df_paper_title_kw.merge(df_citation_count, how='inner', on='id', copy=False)
-    ids = df_paper_title_kw['id'].tolist()
-
-    # if no match, just return a blank graph
-    if not ids:
-        G = nx.Graph()
-        jsonData = json_graph.node_link_data(G)
-        return jsonData, 0
-
     # iterate all starting pmids to get their citations
+    ids = df_paper_title_kw['id'].tolist()
     cite_list = []
     for starting_pmid in ids:
-        cite_list.append(db_query.get_network_by_id(starting_pmid, citation_depth))
+        cite_list.append(db_query.get_network_by_id(
+            starting_pmid, citation_depth))
     df = pd.concat(cite_list)
 
     # build graph
@@ -136,7 +123,8 @@ def generate_graph(min_year, max_year, min_cite, max_cite, rank_var='citations')
     # get citations
     df_citation_out, n = db_query.get_citations_by_id(ids, id_type='from')
     df_citation_in, n = db_query.get_citations_by_id(ids, id_type='to')
-    df_citation = pd.concat([df_citation_in, df_citation_out], ignore_index=True)
+    df_citation = pd.concat(
+        [df_citation_in, df_citation_out], ignore_index=True)
 
     # build graph
     l_ = df_citation.values.tolist()
@@ -160,12 +148,12 @@ def get_rank(G, rank_var):
     if rank_var == 'pagerank':
         rnk_dict = nx.pagerank(G)
         df_rnk = pd.DataFrame([rnk_dict], index=[rank_var]).T
-        df_rnk = df_rnk.reset_index().rename(columns={'index':'id'})
+        df_rnk = df_rnk.reset_index().rename(columns={'index': 'id'})
     # use citation count
     if rank_var == 'citations':
         df_cnt, n = db_query.get_incoming_count_by_id(G.nodes())
-        df_rnk = pd.DataFrame(G.nodes(), columns=['id']).merge(df_cnt, how='left', on='id', copy=False)
+        df_rnk = pd.DataFrame(G.nodes(), columns=['id']).merge(
+            df_cnt, how='left', on='id', copy=False)
         df_rnk.fillna(0, inplace=True)
     df_rnk['rank'] = df_rnk[rank_var].rank(method='dense', ascending=False)
     return df_rnk
-
