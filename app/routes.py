@@ -37,7 +37,6 @@ def get_article_by_id(article_id):
     if not articles:
         abort(404)
     articles = [obj.to_dict() for obj in articles]
-    print(articles)
     return jsonify(article=articles), 200
 
 # article within the period

@@ -34,6 +34,11 @@ class StagingConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:rWJ5is53@0.0.0.0/rvcapdb?charset=utf8mb4'
 
+# Test environment config -- Use production database
+class TestConfig(Config):
+    '''test config'''
+    DEBUG = False
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # Prod environment config -- Use production database
 class ProductionConfig(Config):
@@ -46,6 +51,7 @@ class ProductionConfig(Config):
 app_config = {
     'development': DevelopmentConfig,
     'stage': StagingConfig,
+    'test': TestConfig,
     'production': ProductionConfig,
 }
 

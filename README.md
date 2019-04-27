@@ -30,7 +30,7 @@ python main.py
 To test APIs, use the Postman collection in 'Development Resources/API' section in Google Drive
 
 To run test with code coverage:
-- Set environment variable to 'stage'
+- Set environment variable to 'test'
 - Run the following command
 ```
 pytest --cov=app -p no:warnings test.py --cov-report html
