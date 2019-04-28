@@ -46,13 +46,16 @@ def generate_graph_title_keyword(title_search, keyword_search, citation_depth, m
     keyword_search = keyword_search.replace("'", "")
     df_paper_title_kw, n = db_query.get_ids_by_title_keyword(
         title_search, keyword_search, min_year, max_year, min_cite, max_cite)
+    print(df_paper_title_kw)
+    import time 
+    time.sleep(3)
 
-    # filter out those that have low difflib score
-    if title_search != "%":
-        matches = get_close_matches(
-            title_search, df_paper_title_kw['title'], n=20, cutoff=cutoff)
-        df_paper_title_kw = df_paper_title_kw[df_paper_title_kw['title'].isin(
-            matches)]
+    # # filter out those that have low difflib score
+    # if title_search != "%":
+    #     matches = get_close_matches(
+    #         title_search, df_paper_title_kw['title'], n=20, cutoff=cutoff)
+    #     df_paper_title_kw = df_paper_title_kw[df_paper_title_kw['title'].isin(
+    #         matches)]
 
     # if empty, return and empty graph
     if len(df_paper_title_kw) == 0:
