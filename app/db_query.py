@@ -57,7 +57,7 @@ def get_ids_by_title_keyword(title_search, keyword_search, min_year, max_year, m
                 keyword_token_counter += 1
 
         # read
-        stmt += "ORDER BY citations LIMIT 20"
+        stmt += "ORDER BY citations DESC LIMIT 10"
         stmt = sqlalchemy.text(stmt)
         result = pd.read_sql(stmt, db.engine)
     return result, result.shape[0]
