@@ -199,9 +199,9 @@ def check_rankvar(request):
 
 # check cutoff
 def check_cutoff(request):    
-    # default cutoff to 0.3, limit to 0.1 to 0.9
+    # default cutoff to 0.1, limit to 0.1 to 0.9
     if 'cutoff' not in request.json:
-        cutoff = 0.3
+        cutoff = 0.1
     else:
         cutoff = max(min(request.json['cutoff'], 0.9), 0.1)
     return cutoff

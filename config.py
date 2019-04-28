@@ -38,12 +38,14 @@ class StagingConfig(Config):
 class TestConfig(Config):
     '''test config'''
     DEBUG = False
+    SQLALCHEMY_ECHO = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # Prod environment config -- Use production database
 class ProductionConfig(Config):
     '''prod config'''
     DEBUG = False
+    SQLALCHEMY_ECHO = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
