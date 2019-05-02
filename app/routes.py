@@ -10,7 +10,7 @@ def index():
     return 'Reference visualization rocks!!!'
 
 # article list for all articles
-@app.route('/article', methods=['POST'])
+@app.route('/v1/article', methods=['POST'])
 def get_article_all():
     '''GET all articles'''
 
@@ -29,7 +29,7 @@ def get_article_all():
     return jsonify(article=articles), 200
 
 # article by id
-@app.route('/article/<int:article_id>', methods=['GET'])
+@app.route('/v1/article/<int:article_id>', methods=['GET'])
 def get_article_by_id(article_id):
     '''GET by id'''
 
@@ -37,11 +37,10 @@ def get_article_by_id(article_id):
     if not articles:
         abort(404)
     articles = [obj.to_dict() for obj in articles]
-    print(articles)
     return jsonify(article=articles), 200
 
 # article within the period
-@app.route('/article/period', methods=['POST'])
+@app.route('/v1/article/period', methods=['POST'])
 def get_article_id_in_period():
     '''GET articles within the year timeframe'''
 
@@ -58,7 +57,7 @@ def get_article_id_in_period():
     return jsonify(count=n, article=articles), 200
 
 # article within the range of number of incoming citations
-@app.route('/article/citation-range', methods=['POST'])
+@app.route('/v1/article/citation-range', methods=['POST'])
 def get_article_id_by_citationcount():
     '''GET articles within incoming count limit'''
 
@@ -76,7 +75,7 @@ def get_article_id_by_citationcount():
     return jsonify(count=n, article=ids), 200
 
 # incoming citations
-@app.route('/article/<int:article_id>/incoming-citations', methods=['GET'])
+@app.route('/v1/article/<int:article_id>/incoming-citations', methods=['GET'])
 def get_incoming_cite(article_id):
     '''GET incoming citations by pmid'''
 
@@ -86,7 +85,7 @@ def get_incoming_cite(article_id):
     return jsonify(incoming=citations), 200
 
 # outgoing citations
-@app.route('/article/<int:article_id>/outgoing-citations', methods=['GET'])
+@app.route('/v1/article/<int:article_id>/outgoing-citations', methods=['GET'])
 def get_outgoing_cite(article_id):
     '''GET outgoing citations by pmid'''
 
@@ -97,7 +96,7 @@ def get_outgoing_cite(article_id):
     return jsonify(outgoing=citations), 200
 
 # journal
-@app.route('/journal', methods=['GET'])
+@app.route('/v1/journal', methods=['GET'])
 def get_journal_all():
     '''GET all'''
     journals = models.Journal().get_all()
@@ -107,7 +106,7 @@ def get_journal_all():
     return jsonify(journal=journals), 200
 
 # journal by id
-@app.route('/journal/<int:journal_id>', methods=['GET'])
+@app.route('/v1/journal/<int:journal_id>', methods=['GET'])
 def get_journal_by_id(journal_id):
     '''GET by id'''
 
@@ -118,7 +117,7 @@ def get_journal_by_id(journal_id):
     return jsonify(journal=journals), 200
 
 # graph
-@app.route('/graph', methods=['POST'])
+@app.route('/v1/graph', methods=['POST'])
 def get_graph_in_period():
     '''GET graph within the year timeframe'''
 
@@ -137,7 +136,7 @@ def get_graph_in_period():
     return jsonify(count=n, graph=gr), 200
 
 # graph title SEARCH
-@app.route('/graph/title', methods=['POST'])
+@app.route('/v1/graph/title', methods=['POST'])
 def get_graph_in_period_with_title():
     '''GET graph within the year timeframe, with provided title (SEARCH)'''
 
@@ -163,7 +162,7 @@ def get_graph_in_period_with_title():
 
 
 # graph started from 1 article ID
-@app.route('/graph/<int:article_id>', methods=['POST'])
+@app.route('/v1/graph/<int:article_id>', methods=['POST'])
 def get_graph_from_id(article_id):
     '''GET graph from one article ID'''
 
@@ -200,9 +199,9 @@ def check_rankvar(request):
 
 # check cutoff
 def check_cutoff(request):    
-    # default cutoff to 0.3, limit to 0.1 to 0.9
+    # default cutoff to 0.1, limit to 0.1 to 0.9
     if 'cutoff' not in request.json:
-        cutoff = 0.3
+        cutoff = 0.1
     else:
         cutoff = max(min(request.json['cutoff'], 0.9), 0.1)
     return cutoff
