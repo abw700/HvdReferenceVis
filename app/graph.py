@@ -2,7 +2,7 @@ from app import db_query, models
 import pandas as pd
 import networkx as nx
 from networkx.readwrite import json_graph
-from difflib import get_close_matches
+import time
 
 
 def generate_graph_outgoing_citations(starting_pmid, citation_depth, rank_var='citations'):
@@ -41,21 +41,30 @@ def generate_graph_outgoing_citations(starting_pmid, citation_depth, rank_var='c
 def generate_graph_title_keyword(title_search, keyword_search, citation_depth, min_year, max_year, min_cite, max_cite, rank_var='citations', cutoff=0.3):
     '''GET graph by year'''
 
+    t0 = time.time()
     # GET articles with the search title and keyword parameters
     title_search = title_search.replace("'", "")
     keyword_search = keyword_search.replace("'", "")
+    
+    # flag exact title phrase search
+    if title_search.startswith('"'):
+        # if exact title phrase search, ignore min_cite 
+        min_cite = 1
+        pass
+    else: 
+        # try exact title first
+        title_search = '"' + title_search + '"'
+    exact_title = True
     df_paper_title_kw, n = db_query.get_ids_by_title_keyword(
         title_search, keyword_search, min_year, max_year, min_cite, max_cite)
-    print(df_paper_title_kw)
-    import time 
-    time.sleep(3)
 
-    # # filter out those that have low difflib score
-    # if title_search != "%":
-    #     matches = get_close_matches(
-    #         title_search, df_paper_title_kw['title'], n=20, cutoff=cutoff)
-    #     df_paper_title_kw = df_paper_title_kw[df_paper_title_kw['title'].isin(
-    #         matches)]
+    # if exact search and empty result, search again
+    if len(df_paper_title_kw) == 0 and title_search.startswith('"'):
+        exact_title = False
+        # strip out double quote and search again
+        title_search = title_search.replace('"', '')
+        df_paper_title_kw, n = db_query.get_ids_by_title_keyword(
+            title_search, keyword_search, min_year, max_year, min_cite, max_cite)
 
     # if empty, return and empty graph
     if len(df_paper_title_kw) == 0:
@@ -65,16 +74,16 @@ def generate_graph_title_keyword(title_search, keyword_search, citation_depth, m
     # iterate all starting pmids to get their citations
     ids = df_paper_title_kw['id'].tolist()
     cite_list = []
-    for starting_pmid in ids:
-        cite_list.append(db_query.get_network_by_id(
-            starting_pmid, citation_depth))
+    # for starting_pmid in ids:
+    cite_list.append(db_query.get_network_by_id(
+        ids, citation_depth))
     df = pd.concat(cite_list)
 
     # build graph
-    l_ = df[['apmid', 'bpmid']].values.tolist()
+    l_ = df[['apmid', 'bpmid']].drop_duplicates().values.tolist()
     G = nx.Graph()
     G.add_edges_from(l_)
-    df_rnk = get_rank(G, rank_var)
+    # df_rnk = get_rank(G, rank_var)
 
     # add node metadata
     for n in G:
@@ -95,10 +104,12 @@ def generate_graph_title_keyword(title_search, keyword_search, citation_depth, m
             G.node[n]['degree'] = int(df[df['bpmid'] == n]['depth'].min())
 
         # create int variable that tells us rank of each node (compared with all nodes returned)
-        G.node[n]['rank'] = df_rnk[df_rnk['id'] == n]['rank'].values[0]
+        # G.node[n]['rank'] = df_rnk[df_rnk['id'] == n]['rank'].values[0]
 
     # export graph to json
     jsonData = json_graph.node_link_data(G)
+    jsonData['exact_title_phrase'] = exact_title
+    print('Time taken', time.time() - t0)
     return jsonData, len(l_)
 
 
@@ -158,5 +169,5 @@ def get_rank(G, rank_var):
         df_rnk = pd.DataFrame(G.nodes(), columns=['id']).merge(
             df_cnt, how='left', on='id', copy=False)
         df_rnk.fillna(0, inplace=True)
-    df_rnk['rank'] = df_rnk[rank_var].rank(method='dense', ascending=False)
+    df_rnk['rank'] = df_rnk[rank_var].rank(method='first', ascending=False)
     return df_rnk

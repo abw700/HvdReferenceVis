@@ -1,6 +1,5 @@
 from app import db
 from sqlalchemy import select, MetaData
-from nltk.tokenize import word_tokenize
 import pandas as pd
 import sqlalchemy
 
@@ -24,9 +23,9 @@ def get_ids_by_title_keyword(title_search, keyword_search, min_year, max_year, m
 
     # Need to break the title_search down into tokens, and convert to RAW SQL statement
     # first part of SQL statement 
-    stmt = "SELECT a.id, a.title, c.citations FROM article a "
-    stmt += "INNER JOIN citecount c ON a.id = c.id AND c.citations BETWEEN " + str(min_cite) + " AND " + str(max_cite) + " "
+    stmt = "SELECT a.id FROM article a "
     stmt += "WHERE pubyear BETWEEN " + str(min_year) + " AND " + str(max_year) + " "
+    stmt += "AND citations BETWEEN " + str(min_cite) + " AND " + str(max_cite) + " "
 
     # if no search or search using wildcard `%`, just return blank
     if (title_search == "%" and keyword_search == "%") or (title_search == "" and keyword_search == ""):
@@ -36,26 +35,20 @@ def get_ids_by_title_keyword(title_search, keyword_search, min_year, max_year, m
     else:
         # title
         if title_search != "%" and title_search != "":
-            # Use nltk to tokenize
-            title_tokens = word_tokenize(title_search)
-        
-            # add title to stmt
-            title_token_counter = 0
-            for title_part in title_tokens:
-                stmt += "AND MATCH(title) AGAINST ('" + title_part + "') "
-                title_token_counter += 1
-            
+            # if exact phrase
+            if title_search.startswith('"'):
+                stmt += "AND MATCH(title) AGAINST ('" + title_search + "' IN BOOLEAN MODE) "
+            else:
+                stmt += "AND MATCH(title) AGAINST ('" + title_search + "') "
+
         # keyword
         if keyword_search != "%" and keyword_search != "":
             # separate keywords by commas
-            keyword_tokens = keyword_search.replace(', ', ',').split(',')
+            keyword_tokens = ['+' + kw for kw in keyword_search.replace(', ', ',').split(',')]
 
             # add keyword
-            keyword_token_counter = 0
-            for keyword_part in keyword_tokens:
-                stmt += "AND MATCH(keywords) AGAINST ('" + keyword_part + "') "
-                keyword_token_counter += 1
-
+            stmt += "AND MATCH(keywords) AGAINST ('" + " ".join(keyword_tokens) + "' IN BOOLEAN MODE) "
+            
         # read
         stmt += "ORDER BY citations DESC LIMIT 10"
         stmt = sqlalchemy.text(stmt)
@@ -94,7 +87,7 @@ def get_incoming_count_by_id(id_list):
     return result, result.shape[0]
 
 
-def get_citations_by_id(id_list, id_type=['from', 'to']):
+def get_citations_by_id(id_list, id_type=['from', 'to', 'both']):
     '''get citation where apmid or bpmid in the list'''
 
     # statement
@@ -106,26 +99,47 @@ def get_citations_by_id(id_list, id_type=['from', 'to']):
     if id_type == 'from':
         stmt = select([citation.c.apmid, citation.c.bpmid],
                       citation.c.apmid.in_(id_list))
+        result = pd.read_sql(stmt, db.engine)
     # if looking at citation `to`, use bpmid
-    else:
+    elif id_type == 'to':
         stmt = select([citation.c.apmid, citation.c.bpmid],
                       citation.c.bpmid.in_(id_list))
+        result = pd.read_sql(stmt, db.engine)
+    # else both direction
+    else:
+        stmt1 = select([citation.c.apmid, citation.c.bpmid],
+                      citation.c.apmid.in_(id_list))
+        stmt2 = select([citation.c.apmid, citation.c.bpmid],
+                      citation.c.bpmid.in_(id_list))
+        result1 = pd.read_sql(stmt1, db.engine)
+        result2 = pd.read_sql(stmt2, db.engine)
+        result = pd.concat([result1, result2], ignore_index=True)
 
     # read
-    result = pd.read_sql(stmt, db.engine)
     result = result.drop_duplicates()
     return result, result.shape[0]
 
 
-def get_network_by_id(starting_pmid, citation_depth=1):
+def get_network_by_id(starting_pmids, citation_depth=1):
     '''get citation network (both incoming and outgoing) from starting pmid'''
     
-    # iterate through the depth, starting with starting_pmid, store dataframe result in a dict
+    # iterate through the depth, starting with starting_pmids, store dataframe result in a dict
     l_ = []
+    # depth_iteration = 1
+    # ids = starting_pmids[:]
+    # while depth_iteration <= citation_depth:
+    #     df_citation, n = get_citations_by_id(ids, id_type='both')
+    #     df_citation['depth'] = depth_iteration
+    #     # add the current batch of nodes to the master list...
+    #     new_ids = df_citation['apmid'].tolist() + df_citation['bpmid'].tolist()
+    #     new_ids = [id for id in new_ids if id not in ids]
+    #     ids = df_citation['bpmid'].tolist()
+    #     l_.append(df_citation)
+    #     depth_iteration += 1
 
     # outgoing
     depth_iteration = 1
-    ids = [starting_pmid]
+    ids = starting_pmids[:]
     while depth_iteration <= citation_depth:
         df_citation_out, n = get_citations_by_id(ids, id_type='from')
         df_citation_out['depth'] = depth_iteration
@@ -136,7 +150,7 @@ def get_network_by_id(starting_pmid, citation_depth=1):
 
     # incoming
     depth_iteration = 1
-    ids = [starting_pmid]
+    ids = starting_pmids[:]
     while depth_iteration <= citation_depth:
         df_citation_in, n = get_citations_by_id(ids, id_type='to')
         df_citation_in['depth'] = depth_iteration
@@ -146,5 +160,6 @@ def get_network_by_id(starting_pmid, citation_depth=1):
         depth_iteration += 1
 
     # combine all iterations
-    return pd.concat(l_, ignore_index=True)
-
+    nodes = pd.concat(l_, ignore_index=True)
+    nodes = nodes.drop_duplicates()
+    return nodes
