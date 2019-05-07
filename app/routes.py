@@ -1,5 +1,7 @@
 from flask import jsonify, request, abort, url_for
 from app import app, models, db_query, graph
+from rq.job import Job
+import time
 
 # Simple routes using ORM
 
@@ -154,11 +156,18 @@ def get_graph_in_period_with_title():
     keywords = request.json['keywords'] if 'keywords' in request.json else '%'
 
     # get
-    gr, n = graph.generate_graph_title_keyword(
-        title, keywords, depth, min_year, max_year, min_cite, max_cite, rank_var, cutoff)
-    if not gr:
-        abort(404)
-    return jsonify(count=n, graph=gr), 200
+    task  = app.task_queue.enqueue(graph.generate_graph_title_keyword, title, keywords, depth, min_year, max_year, min_cite, max_cite, rank_var, cutoff)
+
+    # polling for 25 seconds to see if task finishes, if not then return task_id
+    t0 = time.time()
+    while time.time() - t0 < 25:
+        time.sleep(0.25)
+        if task.is_finished:
+            gr, n = task.result
+            if not gr:
+                abort(404)
+            return jsonify(count=n, graph=gr, task_id=task.get_id()), 200
+    return jsonify(task_id=task.get_id()), 200
 
 
 # graph started from 1 article ID
@@ -177,6 +186,32 @@ def get_graph_from_id(article_id):
     if not gr:
         abort(404)
     return jsonify(count=n, graph=gr), 200
+
+
+# graph result status
+@app.route('/v1/graph/result/<task_id>/status', methods=['GET'])
+def get_graph_result_status(task_id):
+    '''GET graph result status using task ID'''
+
+    # return status
+    task = Job.fetch(task_id, connection=app.rq_conn)
+    return jsonify(status=task.get_status())
+
+
+# graph result
+@app.route('/v1/graph/result/<task_id>', methods=['GET'])
+def get_graph_result(task_id):
+    '''GET graph result using task ID'''
+
+    # if task finished, get result. if not, return 404
+    task = Job.fetch(task_id, connection=app.rq_conn)
+    if task.is_finished:
+        gr, n = task.result
+        if not gr:
+            abort(404)
+        return jsonify(count=n, graph=gr), 200
+    else:
+        abort(404)
 
 
 # check depth
@@ -237,4 +272,3 @@ def check_cite(request):
     if min_cite > max_cite or min_cite < 0 or max_cite <= 0:
         abort(400)
     return min_cite, max_cite
-

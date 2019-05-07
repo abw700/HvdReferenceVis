@@ -143,6 +143,14 @@ def test_graph_title(client):
     json_dict = {'depth': 3, 'title': 'liver cancer'}
     response = post_json(client, "/v1/graph/title", json_dict)
     assert response.status_code == 200
+    # correct json body, return 200
+    json_dict = {'depth': 3, 'title': '"liver cancer"'}
+    response = post_json(client, "/v1/graph/title", json_dict)
+    assert response.status_code == 200
+    # correct json body, return 200
+    json_dict = {'depth': 3, 'title': '"cancer liver"'}
+    response = post_json(client, "/v1/graph/title", json_dict)
+    assert response.status_code == 200
     # correct json body, no match, return 200
     json_dict = {'depth': 3, 'title': 'justasearchthatnotmatched'}
     response = post_json(client, "/v1/graph/title", json_dict)
@@ -190,3 +198,11 @@ def test_graph_keyword(client):
     json_dict = {'depth': 3, 'title': 'liver cancer', 'keyword': 'Hepatocellular carcinoma,cancer'}
     response = post_json(client, "/v1/graph/title", json_dict)
     assert response.status_code == 200
+    # check task_id route
+    task_id = response.json['task_id']
+    assert task_id != ''
+    response = client.get('/v1/graph/result/' + task_id + '/status')
+    assert response.status_code == 200
+    response = client.get('/v1/graph/result/' + task_id)
+    assert response.status_code == 200
+
