@@ -9,7 +9,7 @@ def generate_graph_outgoing_citations(starting_pmid, citation_depth, rank_var='c
     ''' GET graph a number of depth CITATIONs away, '''
 
     # get both incoming and outgoing citations from starting_pmid
-    df = db_query.get_network_by_id(starting_pmid, citation_depth)
+    df = db_query.get_network_by_id([starting_pmid], citation_depth)
 
     # build graph
     l_ = df[['apmid', 'bpmid']].values.tolist()

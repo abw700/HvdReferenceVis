@@ -2,37 +2,65 @@
 
 ### Collaborators: Arthur, Mohammad, David, Pipat
 
-#### How to setup development environment
-- Copy rvcapsrv1.db to flask_mysql directory
-- Install VirtualEnv if you dont have it:
+#### Requirements:
+- Linux or MacOS
+- Python 3.7.2
+
+#### How to setup local development environment
+- Install a sample MySQL database as described in https://github.com/pipatth/pubmed_update
+- Or, use the database hosted on AWS by the author (preferred)
+- Install VirtualEnv if you don't have it:
 ```
-pip install virtualenv
+$ pip install virtualenv
 ```
 - Create virtual environment and install dependencies
 ```
-virtualenv env
-source env/bin/activate (This doesn't work on windows - For windows use "env\Scripts\activate". Note: you'll need admin permissions to run this script -- Open powershell in Admin mode and enter "Set-ExecutionPolicy Unrestricted" and hit "Y")
-pip install -r requirements.txt
+$ virtualenv env
+$ source env/bin/activate 
+$ pip install -r requirements.txt
 ```
-- Set environment variable to 'development'
+- Set environment variables and start a Redis Queue server
 ```
-On MacOS / Linux:
-export FLASK_CONFIG=development 
-
-On windows:
-set FLASK_CONFIG=development 
--- still has issues, will research how to set env variables easily)
+$ export FLASK_CONFIG=development 
+$ export DEV_ENDPOINTS=<your_mysql_ip_host>
+$ export DEV_DBNAME=<your_database_name>
+$ export DEV_USERNAME=<your_mysql_username>
+$ export DEV_PASS=<your_mysql_password>
+$ python worker.py
 ```
-- Start the server
+- In another console, activate virtual environment, set environment variables, and start the server
 ```
-python main.py
+$ source env/bin/activate 
+$ export FLASK_CONFIG=development 
+$ export DEV_ENDPOINTS=<your_mysql_ip_host>
+$ export DEV_DBNAME=<your_database_name>
+$ export DEV_USERNAME=<your_mysql_username>
+$ export DEV_PASS=<your_mysql_password>
+$ python main.py
 ```
-To test APIs, use the Postman collection in 'Development Resources/API' section in Google Drive
 
 To run test with code coverage:
-- Set environment variable to 'test'
-- Run the following command
+- Use the database hosted on AWS by the author
+- Set environment variable to 'test' and start a Redis Queue server
 ```
-pytest --cov=app -p no:warnings test.py --cov-report html
+$ source env/bin/activate 
+$ export FLASK_CONFIG=test
+$ export DEV_ENDPOINTS=<your_mysql_ip_host>
+$ export DEV_DBNAME=<your_database_name>
+$ export DEV_USERNAME=<your_mysql_username>
+$ export DEV_PASS=<your_mysql_password>
+$ python worker.py
+```
+- In another console, activate virtual environment, set environment variables, and run the following command
+```
+$ source env/bin/activate 
+$ export FLASK_CONFIG=test
+$ export DEV_ENDPOINTS=<your_mysql_ip_host>
+$ export DEV_DBNAME=<your_database_name>
+$ export DEV_USERNAME=<your_mysql_username>
+$ export DEV_PASS=<your_mysql_password>
+$ pytest --cov=app -p no:warnings test.py --cov-report html
 ```
 Test coverage report will be created in './htmlcov/index.html'
+
+To test APIs, use the Postman collection provided in `RefViz.postman_collection.json`

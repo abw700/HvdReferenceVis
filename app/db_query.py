@@ -125,17 +125,6 @@ def get_network_by_id(starting_pmids, citation_depth=1):
     
     # iterate through the depth, starting with starting_pmids, store dataframe result in a dict
     l_ = []
-    # depth_iteration = 1
-    # ids = starting_pmids[:]
-    # while depth_iteration <= citation_depth:
-    #     df_citation, n = get_citations_by_id(ids, id_type='both')
-    #     df_citation['depth'] = depth_iteration
-    #     # add the current batch of nodes to the master list...
-    #     new_ids = df_citation['apmid'].tolist() + df_citation['bpmid'].tolist()
-    #     new_ids = [id for id in new_ids if id not in ids]
-    #     ids = df_citation['bpmid'].tolist()
-    #     l_.append(df_citation)
-    #     depth_iteration += 1
 
     # outgoing
     depth_iteration = 1

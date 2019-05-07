@@ -12,7 +12,8 @@ import os
 app = Flask(__name__, instance_relative_config=True)
 CORS(app)
 config_name = os.getenv('FLASK_CONFIG')
-# config_name = "production"
+if config_name is None:
+    raise ValueError('Environment variable for config name is missing')
 app.config.from_object(app_config[config_name])
 app.task_queue = rq.Queue(connection=conn)
 app.rq_conn = conn
