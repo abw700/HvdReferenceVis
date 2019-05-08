@@ -22,20 +22,20 @@ $ pip install -r requirements.txt
 - Set environment variables and start a Redis Queue server
 ```
 $ export FLASK_CONFIG=development 
-$ export DEV_ENDPOINTS=<your_mysql_ip_host>
-$ export DEV_DBNAME=<your_database_name>
-$ export DEV_USERNAME=<your_mysql_username>
-$ export DEV_PASS=<your_mysql_password>
+$ export DB_ENDPOINTS=<your_mysql_ip_host>
+$ export DB_DBNAME=<your_database_name>
+$ export DB_USERNAME=<your_mysql_username>
+$ export DB_PASS=<your_mysql_password>
 $ python worker.py
 ```
 - In another console, activate virtual environment, set environment variables, and start the server
 ```
 $ source env/bin/activate 
 $ export FLASK_CONFIG=development 
-$ export DEV_ENDPOINTS=<your_mysql_ip_host>
-$ export DEV_DBNAME=<your_database_name>
-$ export DEV_USERNAME=<your_mysql_username>
-$ export DEV_PASS=<your_mysql_password>
+$ export DB_ENDPOINTS=<your_mysql_ip_host>
+$ export DB_DBNAME=<your_database_name>
+$ export DB_USERNAME=<your_mysql_username>
+$ export DB_PASS=<your_mysql_password>
 $ python main.py
 ```
 
@@ -45,20 +45,20 @@ To run test with code coverage:
 ```
 $ source env/bin/activate 
 $ export FLASK_CONFIG=test
-$ export DEV_ENDPOINTS=<your_mysql_ip_host>
-$ export DEV_DBNAME=<your_database_name>
-$ export DEV_USERNAME=<your_mysql_username>
-$ export DEV_PASS=<your_mysql_password>
+$ export DB_ENDPOINTS=<your_mysql_ip_host>
+$ export DB_DBNAME=<your_database_name>
+$ export DB_USERNAME=<your_mysql_username>
+$ export DB_PASS=<your_mysql_password>
 $ python worker.py
 ```
 - In another console, activate virtual environment, set environment variables, and run the following command
 ```
 $ source env/bin/activate 
 $ export FLASK_CONFIG=test
-$ export DEV_ENDPOINTS=<your_mysql_ip_host>
-$ export DEV_DBNAME=<your_database_name>
-$ export DEV_USERNAME=<your_mysql_username>
-$ export DEV_PASS=<your_mysql_password>
+$ export DB_ENDPOINTS=<your_mysql_ip_host>
+$ export DB_DBNAME=<your_database_name>
+$ export DB_USERNAME=<your_mysql_username>
+$ export DB_PASS=<your_mysql_password>
 $ pytest --cov=app -p no:warnings test.py --cov-report html
 ```
 Test coverage report will be created in './htmlcov/index.html'
